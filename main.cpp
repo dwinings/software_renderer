@@ -33,6 +33,8 @@
 #define WINDOW_WIDTH 600
 #define WINDOW_HEIGHT 600
 
+#define CAMERA_DISTANCE 2
+
 Color black(0, 0, 0, 1);
 Color white(1, 1, 1, 1);
 Color red(1, 0, 0, 1);
@@ -156,7 +158,7 @@ void drawTriangleHead(Rasterizer &rasterizer) {
     }
 
     // || AC x AB ||
-    auto normal = ((world_coords[2] - world_coords[0]) ^ (world_coords[1] - world_coords[0])).normalize();
+    auto normal = cross((world_coords[2] - world_coords[0]), (world_coords[1] - world_coords[0])).normalize();
     float intensity = (normal * light_direction);
 
     if (intensity > 1) intensity = 1;

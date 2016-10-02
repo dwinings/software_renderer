@@ -379,7 +379,7 @@ Vector3f Rasterizer::Barycentric(const Vector3f &a, const Vector3f &b, const Vec
   );
 
   // (u, v, area)
-  Vector3f orthoVector = xCoords ^ yCoords;
+  Vector3f orthoVector = cross(xCoords, yCoords);
 
   // Actually the area of the parallelogram, not the triangle.
   float double_area = orthoVector.z ;
