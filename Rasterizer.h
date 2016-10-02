@@ -1,0 +1,53 @@
+//
+// Created by David Winings on 9/29/16.
+//
+
+#ifndef SOFTWARE_RENDERER_RASTERIZER_H
+#define SOFTWARE_RENDERER_RASTERIZER_H
+
+
+#include <cstdint>
+#include "Color.h"
+#include "Vectors.h"
+#include "Model.h"
+
+class Rasterizer {
+public:
+  void SetFrameBuffer(uint32_t* framebuffer, unsigned width, unsigned height);
+  void SetPixel(uint32_t x, uint32_t y, const Color &color);
+  void NextFrame();
+  void Line(int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &color);
+  void Line(int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &start_color, const Color &end_color);
+  void Triangle(Vector3f p0, Vector3f p1, Vector3f p2, const Vector2f *texture_coords, const Model &texture,
+                float intensity);
+  void Triangle(Vector3f p0, Vector3f p1, Vector3f p2, const Color &color);
+  void Triangle(Vector3f points[], const Color &color);
+  uint32_t width()const;
+  uint32_t height()const;
+  float *z_buffer;
+private:
+  uint32_t* framebuffer;
+  uint32_t screen_width;
+  uint32_t screen_height;
+  bool drawn_to;
+
+  // Lesson 1
+  void BresenhamDrawLine(float granularity, int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &color);
+  void BresenhamDrawLine2(int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &color);
+  void BresenhamDrawLine3(int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &color);
+  void BresenhamDrawLine4(int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &color);
+  void BresenhamDrawLine4(int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &start_color, const Color &end_color);
+
+  // Lesson 2
+  Vector3f Barycentric(const Vector3f &a, const Vector3f &b, const Vector3f &c, const Vector3f &point);
+  void TriangleLineMethod(Vector2i p0, Vector2i p1, Vector2i p2, const Color &color);
+  void TrianglePixelMethod(Vector3f p0, Vector3f p1, Vector3f p2, const Color &color);
+  void TrianglePixelMethodTextured(Vector3f p0, Vector3f p1, Vector3f p2, const Vector2f *texture_coords,
+                                   const Model &texture, float intensity);
+
+
+  void SetPixel(uint32_t x, uint32_t y, const TGAColor &tcolor);
+};
+
+
+#endif //SOFTWARE_RENDERER_RASTERIZER_H

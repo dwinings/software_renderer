@@ -1,0 +1,7 @@
+/*.o
+/software_renderer
+/Makefile
+/CMakeCache.txt
+/cmake_install.cmake
+/CMakeFiles
+/.idea
