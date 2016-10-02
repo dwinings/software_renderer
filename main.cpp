@@ -131,6 +131,7 @@ void drawTriangleHead(Rasterizer &rasterizer) {
   Color colors[]{black, white, red, green, blue, cyan, yellow};
 
   Model model("african_head.obj");
+  model.load_texture("african_head_diffuse.tga");
   TGAImage texture;
   Color theColor;
 
@@ -156,7 +157,7 @@ void drawTriangleHead(Rasterizer &rasterizer) {
 
     // || AC x AB ||
     auto normal = ((world_coords[2] - world_coords[0]) ^ (world_coords[1] - world_coords[0])).normalize();
-    float intensity = (normal * light_direction) / 1.5f;
+    float intensity = (normal * light_direction);
 
     if (intensity > 1) intensity = 1;
 
@@ -186,7 +187,7 @@ int main(int argc, char *argv[])
   Rasterizer rasterizer;
   rasterizer.SetFrameBuffer((uint32_t*)screen->pixels, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-  drawWireframeHead(rasterizer);
+  drawTriangleHead(rasterizer);
   unsigned int lastTicks = SDL_GetTicks();
 
   // loop until we're done running the program

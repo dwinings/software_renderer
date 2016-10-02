@@ -18,13 +18,13 @@ void Rasterizer::SetFrameBuffer(uint32_t *framebuffer, unsigned width, unsigned 
   this->screen_width = width;
   this->screen_height = height;
   this->z_buffer = new float[screen_width * screen_height];
-  std::fill_n(z_buffer, screen_width * screen_height, FLT_MIN);
+  std::fill_n(z_buffer, screen_width * screen_height, -INFINITY);
 }
 
 void Rasterizer::NextFrame() {
   if (drawn_to) {
     drawn_to = false;
-    std::fill_n(z_buffer, screen_width * screen_height, FLT_MIN);
+    std::fill_n(z_buffer, screen_width * screen_height, -INFINITY);
   }
 }
 
@@ -330,7 +330,8 @@ void Rasterizer::TrianglePixelMethodTextured(Vector3f p0, Vector3f p1, Vector3f 
 
       if (z_buffer[zbuf_idx] < pixel.z) {
         Vector2f tex_point = texture_coords[0] * bary.x + texture_coords[1] * bary.y + texture_coords[2] * bary.z;
-        Color color = model.diffuse_color(tex_point.x, tex_point.y);
+        Color color = model.diffuse_color(tex_point.x, tex_point.y) * intensity;
+
 
         SetPixel((int)pixel.x, (int)pixel.y, color);
         z_buffer[zbuf_idx] = pixel.z;
