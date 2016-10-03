@@ -27,6 +27,13 @@ void Rasterizer::NextFrame() {
   }
 }
 
+void Rasterizer::dump_zbuffer() {
+  for(int i = 0; i < screen_width * screen_height; i++) {
+    float z = z_buffer[i] / 255.0f;
+    SetPixel(i % screen_width, i / screen_height, Color(z, z, z, 1));
+  }
+}
+
 void Rasterizer::SetPixel(uint32_t x, uint32_t y, const Color &color) {
   drawn_to = true;
 #ifdef DEBUG

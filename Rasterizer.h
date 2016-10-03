@@ -24,9 +24,10 @@ public:
   void Triangle(Vector3f points[], const Color &color);
   uint32_t width()const;
   uint32_t height()const;
-  float *z_buffer;
+  void dump_zbuffer();
 private:
   uint32_t* framebuffer;
+  float *z_buffer;
   uint32_t screen_width;
   uint32_t screen_height;
   bool drawn_to;
@@ -47,6 +48,7 @@ private:
 
 
   void SetPixel(uint32_t x, uint32_t y, const TGAColor &tcolor);
+
 };
 
 
