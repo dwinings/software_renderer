@@ -7,8 +7,8 @@
 
 
 #include <cstdint>
+#include "Definitions.h"
 #include "Color.h"
-#include "Vectors.h"
 #include "Model.h"
 
 class Rasterizer {

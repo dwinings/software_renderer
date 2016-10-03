@@ -33,7 +33,7 @@ Model::Model(const char *filename) : vertices(), faces(), textures(), normals(),
 
       Vector3f vertex;
       // If it's a vector, we trash tag element and put the other 3 in a vector3.
-      for (int i=0;i<3;i++) line_stream >> vertex.raw[i];
+      for (int i=0;i<3;i++) line_stream >> vertex[i];
       vertices.push_back(vertex);
 
     } else if (tag == "f") {

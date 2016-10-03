@@ -8,9 +8,9 @@
 #include <string>
 #define MODELS_DIR std::string("/Users/wisp/Code/software_renderer/models/")
 #include <vector>
-#include "Vectors.h"
 #include "TGAImage.h"
 #include "Color.h"
+#include "Definitions.h"
 
 class Model {
 private:

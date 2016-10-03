@@ -9,7 +9,6 @@
 #include <vector>
 #include <cfloat>
 #include "Rasterizer.h"
-#include "Vectors.h"
 #include "TGAImage.h"
 #include "Model.h"
 
@@ -216,37 +215,37 @@ void Rasterizer::Line(int32_t start_x, int32_t start_y, int32_t end_x, int32_t e
 void Rasterizer::TriangleLineMethod(Vector2i p0, Vector2i p1, Vector2i p2, const Color &color) {
   // Sort the points so that p0 is the highest.
   // Thus the p0->p2 line covers the total y volume of the triangle.
-  if (p0.y > p1.y) std::swap(p0, p1);
-  if (p0.y > p2.y) std::swap(p0, p2);
-  if (p1.y > p2.y) std::swap(p1, p2);
+  if (p0.y() > p1.y()) std::swap(p0, p1);
+  if (p0.y() > p2.y()) std::swap(p0, p2);
+  if (p1.y() > p2.y()) std::swap(p1, p2);
 
-  uint32_t total_height = p2.y - p0.y;
-  uint32_t segment_height = p1.y - p0.y;
+  uint32_t total_height = p2.y() - p0.y();
+  uint32_t segment_height = p1.y() - p0.y();
 
   if (!segment_height) segment_height++;
 
-  int32_t y = p0.y;
-  for (; y < p1.y; y++) {
+  int32_t y = p0.y();
+  for (; y < p1.y(); y++) {
     // Progress of primary line segment
-    float alpha = (float)(y - p0.y) / total_height;
+    float alpha = (float)(y - p0.y()) / total_height;
     // Progress of secondary line segment
-    float beta  = (float)(y - p0.y) / segment_height;
+    float beta  = (float)(y - p0.y()) / segment_height;
 
-    int32_t ax = p0.x + (p2.x - p0.x) * alpha;
-    int32_t bx = p0.x + (p1.x - p0.x) * beta;
+    int32_t ax = p0.x() + (p2.x() - p0.x()) * alpha;
+    int32_t bx = p0.x() + (p1.x() - p0.x()) * beta;
 
     Line(ax, y, bx, y, color);
   }
 
-  segment_height = p2.y - p1.y;
+  segment_height = p2.y() - p1.y();
   if (!segment_height) segment_height++;
 
-  for (; y <= p2.y; y++) {
-    float alpha = (float)(y - p0.y) / total_height;
-    float beta  = (float)(y - p1.y) / segment_height;
+  for (; y <= p2.y(); y++) {
+    float alpha = (float)(y - p0.y()) / total_height;
+    float beta  = (float)(y - p1.y()) / segment_height;
 
-    int32_t ax = p0.x + (p2.x - p0.x) * alpha;
-    int32_t bx = p1.x + (p2.x - p1.x) * beta;
+    int32_t ax = p0.x() + (p2.x() - p0.x()) * alpha;
+    int32_t bx = p1.x() + (p2.x() - p1.x()) * beta;
     Line(ax, y, bx, y, color);
   }
 }
@@ -256,37 +255,37 @@ void Rasterizer::TrianglePixelMethod(Vector3f p0, Vector3f p1, Vector3f p2, cons
   Vector2i bounding_max(0, 0);
 
   // Generate a bounding box, loop fully unrolled.
-  if (p0.x < bounding_min.x) bounding_min.x = p0.x;
-  if (p0.y < bounding_min.y) bounding_min.y = p0.y;
-  if (p1.x < bounding_min.x) bounding_min.x = p1.x;
-  if (p1.y < bounding_min.y) bounding_min.y = p1.y;
-  if (p2.x < bounding_min.x) bounding_min.x = p2.x;
-  if (p2.y < bounding_min.y) bounding_min.y = p2.y;
-  if (p0.x > bounding_max.x) bounding_max.x = p0.x;
-  if (p0.y > bounding_max.y) bounding_max.y = p0.y;
-  if (p1.x > bounding_max.x) bounding_max.x = p1.x;
-  if (p1.y > bounding_max.y) bounding_max.y = p1.y;
-  if (p2.x > bounding_max.x) bounding_max.x = p2.x;
-  if (p2.y > bounding_max.y) bounding_max.y = p2.y;
-  if (0 > bounding_min.x) bounding_min.x = 0;
-  if (0 > bounding_min.y) bounding_min.y = 0;
-  if (screen_width < bounding_max.x) bounding_max.x = screen_width;
-  if (screen_height < bounding_max.y) bounding_max.y = screen_height;
+  if (p0.x() < bounding_min.x()) bounding_min.x() = p0.x();
+  if (p0.y() < bounding_min.y()) bounding_min.y() = p0.y();
+  if (p1.x() < bounding_min.x()) bounding_min.x() = p1.x();
+  if (p1.y() < bounding_min.y()) bounding_min.y() = p1.y();
+  if (p2.x() < bounding_min.x()) bounding_min.x() = p2.x();
+  if (p2.y() < bounding_min.y()) bounding_min.y() = p2.y();
+  if (p0.x() > bounding_max.x()) bounding_max.x() = p0.x();
+  if (p0.y() > bounding_max.y()) bounding_max.y() = p0.y();
+  if (p1.x() > bounding_max.x()) bounding_max.x() = p1.x();
+  if (p1.y() > bounding_max.y()) bounding_max.y() = p1.y();
+  if (p2.x() > bounding_max.x()) bounding_max.x() = p2.x();
+  if (p2.y() > bounding_max.y()) bounding_max.y() = p2.y();
+  if (0 > bounding_min.x()) bounding_min.x() = 0;
+  if (0 > bounding_min.y()) bounding_min.y() = 0;
+  if (screen_width < bounding_max.x()) bounding_max.x() = screen_width;
+  if (screen_height < bounding_max.y()) bounding_max.y() = screen_height;
 
-  for (int32_t y = bounding_min.y; y <= bounding_max.y; y++) {
-    for (int32_t x = bounding_min.x; x <= bounding_max.x; x++) {
+  for (int32_t y = bounding_min.y(); y <= bounding_max.y(); y++) {
+    for (int32_t x = bounding_min.x(); x <= bounding_max.x(); x++) {
       Vector3f pixel(x, y, 0);
       auto bary = Barycentric(p0, p1, p2, pixel);
-      if (bary.x < 0 || bary.y < 0 || bary.z < 0 || x < 0 || y < 0) continue;
+      if (bary.x() < 0 || bary.y() < 0 || bary.z() < 0 || x < 0 || y < 0) continue;
 
-      int32_t zbuf_idx = (int32_t) round(pixel.x + pixel.y * screen_width);
-      pixel.z += bary.x * p0.z;
-      pixel.z += bary.y * p1.z;
-      pixel.z += bary.z * p2.z;
+      int32_t zbuf_idx = (int32_t) round(pixel.x() + pixel.y() * screen_width);
+      pixel.z() += bary.x() * p0.z();
+      pixel.z() += bary.y() * p1.z();
+      pixel.z() += bary.z() * p2.z();
 
-      if (z_buffer[zbuf_idx] < pixel.z) {
-        SetPixel((int)pixel.x, (int)pixel.y, color);
-        z_buffer[zbuf_idx] = pixel.z;
+      if (z_buffer[zbuf_idx] < pixel.z()) {
+        SetPixel((int)pixel.x(), (int)pixel.y(), color);
+        z_buffer[zbuf_idx] = pixel.z();
       }
     }
   }
@@ -298,43 +297,43 @@ void Rasterizer::TrianglePixelMethodTextured(Vector3f p0, Vector3f p1, Vector3f 
   Vector2i bounding_max(0, 0);
 
   // Generate a bounding box, loop fully unrolled.
-  if (p0.x < bounding_min.x) bounding_min.x = p0.x;
-  if (p0.y < bounding_min.y) bounding_min.y = p0.y;
-  if (p1.x < bounding_min.x) bounding_min.x = p1.x;
-  if (p1.y < bounding_min.y) bounding_min.y = p1.y;
-  if (p2.x < bounding_min.x) bounding_min.x = p2.x;
-  if (p2.y < bounding_min.y) bounding_min.y = p2.y;
-  if (p0.x > bounding_max.x) bounding_max.x = p0.x;
-  if (p0.y > bounding_max.y) bounding_max.y = p0.y;
-  if (p1.x > bounding_max.x) bounding_max.x = p1.x;
-  if (p1.y > bounding_max.y) bounding_max.y = p1.y;
-  if (p2.x > bounding_max.x) bounding_max.x = p2.x;
-  if (p2.y > bounding_max.y) bounding_max.y = p2.y;
-  if (0 > bounding_min.x) bounding_min.x = 0;
-  if (0 > bounding_min.y) bounding_min.y = 0;
-  if (screen_width < bounding_max.x) bounding_max.x = screen_width;
-  if (screen_height < bounding_max.y) bounding_max.y = screen_height;
+  if (p0.x() < bounding_min.x()) bounding_min.x() = p0.x();
+  if (p0.y() < bounding_min.y()) bounding_min.y() = p0.y();
+  if (p1.x() < bounding_min.x()) bounding_min.x() = p1.x();
+  if (p1.y() < bounding_min.y()) bounding_min.y() = p1.y();
+  if (p2.x() < bounding_min.x()) bounding_min.x() = p2.x();
+  if (p2.y() < bounding_min.y()) bounding_min.y() = p2.y();
+  if (p0.x() > bounding_max.x()) bounding_max.x() = p0.x();
+  if (p0.y() > bounding_max.y()) bounding_max.y() = p0.y();
+  if (p1.x() > bounding_max.x()) bounding_max.x() = p1.x();
+  if (p1.y() > bounding_max.y()) bounding_max.y() = p1.y();
+  if (p2.x() > bounding_max.x()) bounding_max.x() = p2.x();
+  if (p2.y() > bounding_max.y()) bounding_max.y() = p2.y();
+  if (0 > bounding_min.x()) bounding_min.x() = 0;
+  if (0 > bounding_min.y()) bounding_min.y() = 0;
+  if (screen_width < bounding_max.x()) bounding_max.x() = screen_width;
+  if (screen_height < bounding_max.y()) bounding_max.y() = screen_height;
 
   float color_denom = 1.0f / 255.0f;
 
-  for (int32_t y = bounding_min.y; y <= bounding_max.y; y++) {
-    for (int32_t x = bounding_min.x; x <= bounding_max.x; x++) {
+  for (int32_t y = bounding_min.y(); y <= bounding_max.y(); y++) {
+    for (int32_t x = bounding_min.x(); x <= bounding_max.x(); x++) {
       Vector3f pixel(x, y, 0);
       auto bary = Barycentric(p0, p1, p2, pixel);
-      if (bary.x < 0 || bary.y < 0 || bary.z < 0 || x < 0 || y < 0) continue;
+      if (bary.x() < 0 || bary.y() < 0 || bary.z() < 0 || x < 0 || y < 0) continue;
 
-      int32_t zbuf_idx = (int32_t) round(pixel.x + pixel.y * screen_width);
-      pixel.z += bary.x * p0.z;
-      pixel.z += bary.y * p1.z;
-      pixel.z += bary.z * p2.z;
+      int32_t zbuf_idx = (int32_t) round(pixel.x() + pixel.y() * screen_width);
+      pixel.z() += bary.x() * p0.z();
+      pixel.z() += bary.y() * p1.z();
+      pixel.z() += bary.z() * p2.z();
 
-      if (z_buffer[zbuf_idx] < pixel.z) {
-        Vector2f tex_point = texture_coords[0] * bary.x + texture_coords[1] * bary.y + texture_coords[2] * bary.z;
-        Color color = model.diffuse_color(tex_point.x, tex_point.y) * intensity;
+      if (z_buffer[zbuf_idx] < pixel.z()) {
+        Vector2f tex_point = texture_coords[0] * bary.x() + texture_coords[1] * bary.y() + texture_coords[2] * bary.z();
+        Color color = model.diffuse_color(tex_point.x(), tex_point.y()) * intensity;
 
 
-        SetPixel((int)pixel.x, (int)pixel.y, color);
-        z_buffer[zbuf_idx] = pixel.z;
+        SetPixel((int)pixel.x(), (int)pixel.y(), color);
+        z_buffer[zbuf_idx] = pixel.z();
       }
     }
   }
@@ -366,30 +365,30 @@ Vector3f Rasterizer::Barycentric(const Vector3f &a, const Vector3f &b, const Vec
   // We get these by solving for P = (1 - u - v)A + uAB + vAC
   // 0 = (1 - u - v)PA + uAB + vAC
   // actually taking the cross product of the x and y vectors of AC, AB and PA is enough.
-  Vector3f xCoords(
-      c.x - a.x, // AC
-      b.x - a.x, // AB
-      a.x - point.x // PA
-  );
+  Vector3f xCoords;
+  xCoords <<
+      c.x() - a.x(), // AC
+      b.x() - a.x(), // AB
+      a.x() - point.x(); // PA
 
-  Vector3f yCoords(
-      c.y - a.y,
-      b.y - a.y,
-      a.y - point.y
-  );
+  Vector3f yCoords;
+  yCoords <<
+      c.y() - a.y(),
+      b.y() - a.y(),
+      a.y() - point.y();
 
   // (u, v, area)
-  Vector3f orthoVector = cross(xCoords, yCoords);
+  Vector3f orthoVector = xCoords.cross(yCoords);
 
   // Actually the area of the parallelogram, not the triangle.
-  float double_area = orthoVector.z ;
+  float double_area = orthoVector.z();
 
   if (std::abs(double_area) < 1e-2) {return Vector3f(-1.0f, 1.0f, 1.0f);}
 
   return Vector3f(
-      1.0f - (orthoVector.x + orthoVector.y)/double_area, // (1 - u - v)
-      orthoVector.y / double_area, // v
-      orthoVector.x / double_area  // u
+      1.0f - (orthoVector.x() + orthoVector.y())/double_area, // (1 - u - v)
+      orthoVector.y() / double_area, // v
+      orthoVector.x() / double_area  // u
   );
 }
 
