@@ -11,6 +11,12 @@
 #include "Color.h"
 #include "Model.h"
 
+struct IShader {
+  virtual ~IShader();
+  virtual Vector3f vertex(int face_idx, int vertex_idx) = 0;
+  virtual bool   fragment(Vector3f bary_coords, Color &color) = 0;
+};
+
 class Rasterizer {
 public:
   void SetFrameBuffer(uint32_t* framebuffer, unsigned width, unsigned height);
@@ -18,8 +24,11 @@ public:
   void NextFrame();
   void Line(int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &color);
   void Line(int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &start_color, const Color &end_color);
-  void Triangle(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f intensities, const Vector2f *texture_coords, const Model &texture);
-  void Triangle(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f intensities, const Color &color);
+  void Triangle(Vector3f* points, IShader& shader);
+  void Triangle(Vector3f p0, Vector3f p1, Vector3f p2,
+      Vector3f intensities, const Vector2f *texture_coords, const Model &texture);
+  void Triangle(Vector3f p0, Vector3f p1, Vector3f p2,
+      Vector3f intensities, const Color &color);
   void Triangle(Vector3f points[], Vector3f intensities, const Color &color);
   uint32_t width()const;
   uint32_t height()const;
@@ -30,6 +39,8 @@ private:
   uint32_t screen_width;
   uint32_t screen_height;
   bool drawn_to;
+
+  void TriangleShader(Vector3f* points, IShader& shader);
 
   // Lesson 1
   void BresenhamDrawLine(float granularity, int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &color);

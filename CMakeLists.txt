@@ -16,7 +16,10 @@ set(SOURCE_FILES
         TGAImage.h
         Definitions.h
         AffineTransforms.cpp
-        AffineTransforms.h)
+        AffineTransforms.h
+        OldMainRoutines.cpp
+        OldMainRoutines.h
+        Shaders.h)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 

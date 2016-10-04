@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include "Color.h"
 
 Color::Color(float r, float g, float b, float a)
@@ -19,10 +20,10 @@ Color::Color(TGAColor tcol) {
 uint32_t
 Color::ToUInt32() const
 {
-	uint32_t r = (uint32_t)(R * 255.0f);
-	uint32_t g = (uint32_t)(G * 255.0f);
-	uint32_t b = (uint32_t)(B * 255.0f);
-	uint32_t a = (uint32_t)(A * 255.0f);
+	int32_t r = (int32_t)(std::min(1.0f, std::max(R, 0.0f)) * 255.0f);
+	int32_t g = (int32_t)(std::min(1.0f, std::max(G, 0.0f)) * 255.0f);
+	int32_t b = (int32_t)(std::min(1.0f, std::max(B, 0.0f)) * 255.0f);
+	int32_t a = (int32_t)(std::min(1.0f, std::max(A, 0.0f)) * 255.0f);
 
 	return (b << 24) | (g << 16) | (r << 8) | a;
 }
@@ -42,7 +43,7 @@ Color::operator - (const Color &c) const
 Color
 Color::operator * (float f) const
 {
-	return Color(R * f, G * f, B * f, A * f);
+	return Color(R * f, G * f, B * f, 1);
 }
 
 std::string

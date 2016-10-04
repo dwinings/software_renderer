@@ -6,18 +6,27 @@
 #include "Model.h"
 #include "TGAImage.h"
 #include "AffineTransforms.h"
+#include "OldMainRoutines.h"
+#include "Shaders.h"
 
-Matrix4f viewport_matrix = Matrix4f::Identity();
-Matrix4f projection_matrix = Matrix4f::Identity();
 
-Color black(0, 0, 0, 1);
-Color white(1, 1, 1, 1);
-Color red(1, 0, 0, 1);
-Color green(0, 1, 0, 1);
-Color blue(0, 0, 1, 1);
-Color cyan(0, 1, 1, 1);
-Color yellow(1, 1, 0, 1);
-Color magenta(1, 0, 1, 1);
+
+void drawShaderHead(Rasterizer &rasterizer) {
+  Model model("african_head.obj");
+  model.load_texture("african_head_diffuse.tga");
+  Vector3f screen_coords[3];
+  GouraudShader shader(model);
+
+  for (uint32_t face_idx = 0; face_idx < model.face_count(); face_idx++) {
+    std::vector<Vector3i> face = model.face(face_idx);
+    for (uint32_t face_vertex_idx = 0; face_vertex_idx < 3; face_vertex_idx++) {
+      screen_coords[face_vertex_idx] = shader.vertex(face_idx, face_vertex_idx);
+    }
+
+    rasterizer.Triangle(screen_coords, shader);
+  }
+}
+
 
 static bool g_Running = true;
 
@@ -48,164 +57,6 @@ HandleEvent(const SDL_Event &event)
   }
 }
 
-Vector4f augment(Vector3f v) {
-  Vector4f aug;
-  aug << v.x(), v.y(), v.z(), 1;
-  return aug;
-}
-
-Vector3f world2screen_ortho(const Vector3f &p) {
-  return Vector3f {
-      (p.x() + 1.0f) * WINDOW_WIDTH / 2,
-      (p.y() + 1.0f) * WINDOW_HEIGHT / 2,
-      p.z()
-  };
-}
-
-Vector3f project_3d(const Vector4f &v) {
-  return Vector3f(
-    v.x() / v.w(),
-    v.y() / v.w(),
-    v.z() / v.w()
-  );
-}
-
-
-void drawTestLines(Rasterizer &rasterizer) {
-  rasterizer.Line(175, 100, 0, 0, cyan);
-  rasterizer.Line(0, 100, 175, 200, cyan);
-  rasterizer.Line(0, WINDOW_HEIGHT, 50, 0, black, green);
-  rasterizer.Line(0, 0, 175, 100, black, green);
-}
-
-void drawWireframeHead(Rasterizer &rasterizer) {
-  Color colors[]{black, white, red, green, blue, cyan, yellow};
-
-  Model model("african_head.obj");
-
-  for (uint32_t face_idx = 0; face_idx < model.face_count(); face_idx++) {
-    for (uint32_t face_vertex = 0; face_vertex < 3; face_vertex++) {
-      int32_t face_vertex_num = model.face(face_idx)[face_vertex][0];
-      Vector3f vec_0 = model.vertex(model.face(face_idx)[face_vertex][0]);
-      Vector3f vec_1 = model.vertex(model.face(face_idx)[(face_vertex + 1) % 3][0]);
-      int start_x = (int)((vec_0.x() + 1.0f) * rasterizer.width()  / 2.0f);
-      int start_y = (int)((vec_0.y() + 1.0f) * rasterizer.height() / 2.0f);
-      int end_x   = (int)((vec_1.x() + 1.0f) * rasterizer.width()  / 2.0f);
-      int end_y   = (int)((vec_1.y() + 1.0f) * rasterizer.height() / 2.0f);
-      rasterizer.Line(start_x, start_y, end_x, end_y, colors[std::rand() % 7]);
-    }
-#ifdef DEBUG
-    std::cerr << "-----------------------------------------------------------\n";
-#endif
-  }
-}
-
-void drawTriangles(Rasterizer &rasterizer) {
-  Vector3f t0[] {Vector3f {10, 70, 0 }, Vector3f {50, 160, 0}, Vector3f{70, 80, 0}};
-  Vector3f t1[] {Vector3f {180, 50, 0 },  Vector3f{150, 1, 0},   Vector3f{70, 180, 0}};
-  Vector3f t2[] {Vector3f {180, 150, 0 }, Vector3f{120, 160, 0}, Vector3f{130, 180, 0}};
-  Vector3f intensities(1, 1, 1);
-  rasterizer.Triangle(t0, intensities, cyan);
-  rasterizer.Triangle(t1, intensities, yellow);
-  rasterizer.Triangle(t2, intensities, magenta);
-}
-
-
-void drawTriangleHead(Rasterizer &rasterizer) {
-  Color colors[]{black, white, red, green, blue, cyan, yellow};
-
-  projection_matrix(3, 2) = -1.0f / CAMERA_DISTANCE;
-  viewport_matrix =
-      translate(Vector3f(
-          WINDOW_WIDTH / 2.0f,
-          WINDOW_HEIGHT / 2.0f,
-          DEPTH_RESOLUTION / 2.0f
-      )) *
-      scale(Vector3f(
-          WINDOW_WIDTH  * RENDER_SCALE / 2.0f,
-          WINDOW_HEIGHT * RENDER_SCALE / 2.0f,
-          DEPTH_RESOLUTION / 2.0f)
-      );
-
-  Matrix4f view_matrix = look_at(
-      CAMERA_POSITION,
-      MODEL_POSITION,
-      Vector3f(0, 1, 0)
-  );
-
-  Matrix4f model_matrix = translate(MODEL_POSITION);
-
-  Matrix4f camera_matrix = 
-    viewport_matrix * projection_matrix * 
-    view_matrix     * model_matrix;
-  Matrix4f inv_trans_camera = camera_matrix.inverse().transpose();
-
-#ifdef DEBUG
-  std::cout << "Viewport Matrix: " << std::endl;
-  std::cout << viewport_matrix << std::endl;
-  std::cout << "Projection Matrix: " << std::endl;
-  std::cout << projection_matrix << std::endl;
-  std::cout << "View Matrix: " << std::endl;
-  std::cout << view_matrix << std::endl;
-  std::cout << "Model Matrix: " << std::endl;
-  std::cout << model_matrix << std::endl;
-  std::cout << "Camera Matrix: " << std::endl;
-  std::cout << camera_matrix << std::endl;
-  std::cout << "Normal xForm Matrix: " << std::endl;
-  std::cout << inv_trans_camera << std::endl;
-#endif
-
-  Model model("african_head.obj");
-  model.load_texture("african_head_diffuse.tga");
-
-  bool skip = false;
-  Vector3f screen_coords[3];
-  Vector3f world_coords[3];
-  Vector2f tex_coords[3];
-  Vector3f normals[3];
-  Vector3f intensities;
-
-
-  for (uint32_t face_idx = 0; face_idx < model.face_count(); face_idx++) {
-    std::vector<Vector3i> face = model.face(face_idx);
-
-    for (uint32_t face_vertex_idx = 0; face_vertex_idx < 3; face_vertex_idx++) {
-      Vector3f vertex = model.vertex(face[face_vertex_idx][0]);
-      Vector2f texture_uv = model.texture(face[face_vertex_idx][1]);
-      normals[face_vertex_idx] = model.normal(face[face_vertex_idx][2]);
-
-      world_coords[face_vertex_idx] = vertex;
-      screen_coords[face_vertex_idx] = project_3d(camera_matrix * augment(vertex));
-      tex_coords[face_vertex_idx] = texture_uv;
-    }
-
-    for (uint32_t i = 0; i < 3; i++) {
-      Vector3f newNormal;
-      Vector4f newNormal4 = inv_trans_camera * Vector4f(normals[i].x(), normals[i].y(), normals[i].z(), 0);
-      newNormal << newNormal4.x(), newNormal4.y(), newNormal4.z();
-      newNormal.normalize();
-
-      
-      /*
-      std::cout << normals[i].dot(LIGHT_DIRECTION) << ", " << normals[i] << std::endl;
-      std::cout << newNormal.dot(LIGHT_DIRECTION) << ", " << newNormal << std::endl;
-      std::cout << "---------------------------------------\n";
-      */
-      
-
-      intensities[i] = newNormal.dot(LIGHT_DIRECTION);
-      if (intensities[i] > 1) intensities[i] = 1;
-      if (intensities[i] < 0) intensities[i] = 0;
-    }
-
-
-    if (!skip) {
-      rasterizer.Triangle(screen_coords[0], screen_coords[1], screen_coords[2], intensities, tex_coords, model);
-    }
-    skip = false;
-  }
-}
-
 int main(int argc, char *argv[])
 {
   // initialize SDL
@@ -226,7 +77,7 @@ int main(int argc, char *argv[])
   Rasterizer rasterizer;
   rasterizer.SetFrameBuffer((uint32_t*)screen->pixels, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-  drawTriangleHead(rasterizer);
+  drawShaderHead(rasterizer);
   unsigned int lastTicks = SDL_GetTicks();
 
   // loop until we're done running the program

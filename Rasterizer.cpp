@@ -342,6 +342,50 @@ void Rasterizer::TrianglePixelMethodTextured(Vector3f p0, Vector3f p1, Vector3f 
   }
 }
 
+void Rasterizer::Triangle(Vector3f* points, IShader &shader) {
+  TriangleShader(points, shader);
+}
+
+void Rasterizer::TriangleShader(Vector3f* points, IShader &shader) {
+  Vector2i bounding_min(screen_width, screen_height);
+  Vector2i bounding_max(0, 0);
+  Color color_holder;
+  bool skip_current_pixel;
+
+  // Generate a bounding box
+
+  for (uint32_t i = 0; i < 3; i++) {
+    for (uint32_t j = 0; j < 2; j++) {
+      if (points[i][j] < bounding_min[j]) bounding_min[j] = points[i][j];
+      if (points[i][j] > bounding_max[j]) bounding_max[j] = points[i][j];
+    }
+  }
+
+  if (0 > bounding_min.x()) bounding_min.x() = 0;
+  if (0 > bounding_min.y()) bounding_min.y() = 0;
+  if (screen_width < bounding_max.x()) bounding_max.x() = screen_width;
+  if (screen_height < bounding_max.y()) bounding_max.y() = screen_height;
+
+  for (int32_t y = bounding_min.y(); y <= bounding_max.y(); y++) {
+    for (int32_t x = bounding_min.x(); x <= bounding_max.x(); x++) {
+      Vector3f pixel(x, y, 0);
+      auto bary = Barycentric(points[0], points[1], points[2], pixel);
+      if (bary.x() < 0 || bary.y() < 0 || bary.z() < 0 || x < 0 || y < 0) continue;
+
+      int32_t zbuf_idx = (int32_t) round(pixel.x() + pixel.y() * screen_width);
+
+      for (uint32_t i = 0; i < 3; i++) pixel.z() += bary[i] * points[i].z();
+
+      if (z_buffer[zbuf_idx] < pixel.z()) {
+        // Sets the color in color_holder
+        skip_current_pixel = shader.fragment(bary, color_holder);
+        SetPixel((int)pixel.x(), (int)pixel.y(), color_holder);
+        z_buffer[zbuf_idx] = pixel.z();
+      }
+    }
+  }
+}
+
 void Rasterizer::Triangle(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f intensities, const Color &color) {
   TrianglePixelMethod(p0, p1, p2, intensities, color);
 }
@@ -394,4 +438,6 @@ Vector3f Rasterizer::Barycentric(const Vector3f &a, const Vector3f &b, const Vec
       orthoVector.x() / double_area  // u
   );
 }
+
+IShader::~IShader() {}
 
