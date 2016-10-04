@@ -84,7 +84,7 @@ bool TGAImage::read_tga_file(const char *filename) {
     flip_horizontally();
   }
 #ifdef DEBUG
-  std::cerr << width << "x" << height << "/" << bytespp*8 << "\n";
+  std::cerr << "Texture Dimensions: \n  " << width << "x" << height << "/" << bytespp*8 << "\n";
 #endif
   in.close();
   return true;

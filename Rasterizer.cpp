@@ -45,11 +45,6 @@ void Rasterizer::SetPixel(uint32_t x, uint32_t y, const Color &color) {
     framebuffer[address] = color.ToUInt32();
 }
 
-void Rasterizer::SetPixel(uint32_t x, uint32_t y, const TGAColor &tcolor) {
-  uint32_t address = x + (screen_height - y) * this->screen_width;
-  memcpy(&(framebuffer[address]), &(tcolor.bgra), sizeof(tcolor.bgra));
-}
-
 // This one chooses an arbitrary granularity and draws that many pixels. Not correct, not efficient.
 void
 Rasterizer::BresenhamDrawLine(float granularity, int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &color) {
@@ -257,7 +252,7 @@ void Rasterizer::TriangleLineMethod(Vector2i p0, Vector2i p1, Vector2i p2, const
   }
 }
 
-void Rasterizer::TrianglePixelMethod(Vector3f p0, Vector3f p1, Vector3f p2, const Color &color) {
+void Rasterizer::TrianglePixelMethod(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f intensities, const Color &color) {
   Vector2i bounding_min(screen_width, screen_height);
   Vector2i bounding_max(0, 0);
 
@@ -291,15 +286,16 @@ void Rasterizer::TrianglePixelMethod(Vector3f p0, Vector3f p1, Vector3f p2, cons
       pixel.z() += bary.z() * p2.z();
 
       if (z_buffer[zbuf_idx] < pixel.z()) {
-        SetPixel((int)pixel.x(), (int)pixel.y(), color);
+        float intensity = intensities[0] * bary.x() + intensities[1] * bary.y() + intensities[2] * bary.z();
+        SetPixel((int)pixel.x(), (int)pixel.y(), color * intensity);
         z_buffer[zbuf_idx] = pixel.z();
       }
     }
   }
 }
 
-void Rasterizer::TrianglePixelMethodTextured(Vector3f p0, Vector3f p1, Vector3f p2, const Vector2f *texture_coords,
-                                             const Model &model, float intensity) {
+void Rasterizer::TrianglePixelMethodTextured(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f intensities, const Vector2f *texture_coords,
+                                             const Model &model) {
   Vector2i bounding_min(screen_width, screen_height);
   Vector2i bounding_max(0, 0);
 
@@ -320,8 +316,6 @@ void Rasterizer::TrianglePixelMethodTextured(Vector3f p0, Vector3f p1, Vector3f 
   if (0 > bounding_min.y()) bounding_min.y() = 0;
   if (screen_width < bounding_max.x()) bounding_max.x() = screen_width;
   if (screen_height < bounding_max.y()) bounding_max.y() = screen_height;
-
-  float color_denom = 1.0f / 255.0f;
 
   for (int32_t y = bounding_min.y(); y <= bounding_max.y(); y++) {
     for (int32_t x = bounding_min.x(); x <= bounding_max.x(); x++) {
@@ -336,7 +330,9 @@ void Rasterizer::TrianglePixelMethodTextured(Vector3f p0, Vector3f p1, Vector3f 
 
       if (z_buffer[zbuf_idx] < pixel.z()) {
         Vector2f tex_point = texture_coords[0] * bary.x() + texture_coords[1] * bary.y() + texture_coords[2] * bary.z();
+        float intensity = intensities[0] * bary.x() + intensities[1] * bary.y() + intensities[2] * bary.z();
         Color color = model.diffuse_color(tex_point.x(), tex_point.y()) * intensity;
+        color.A = 1;
 
 
         SetPixel((int)pixel.x(), (int)pixel.y(), color);
@@ -346,18 +342,18 @@ void Rasterizer::TrianglePixelMethodTextured(Vector3f p0, Vector3f p1, Vector3f 
   }
 }
 
-void Rasterizer::Triangle(Vector3f p0, Vector3f p1, Vector3f p2, const Color &color) {
-  TrianglePixelMethod(p0, p1, p2, color);
+void Rasterizer::Triangle(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f intensities, const Color &color) {
+  TrianglePixelMethod(p0, p1, p2, intensities, color);
 }
 
-void Rasterizer::Triangle(Vector3f p0, Vector3f p1, Vector3f p2,
-                          const Vector2f *texture_coords, const Model &texture, float intensity) {
+void Rasterizer::Triangle(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f intensities,
+                          const Vector2f *texture_coords, const Model &texture) {
 
-  TrianglePixelMethodTextured(p0, p1, p2, texture_coords, texture, intensity);
+  TrianglePixelMethodTextured(p0, p1, p2, intensities, texture_coords, texture);
 }
 
-void Rasterizer::Triangle(Vector3f points[], const Color &color) {
-  Triangle(points[0], points[1], points[2], color);
+void Rasterizer::Triangle(Vector3f points[], Vector3f intensities, const Color &color) {
+  Triangle(points[0], points[1], points[2], intensities, color);
 }
 
 uint32_t Rasterizer::width()const {

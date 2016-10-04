@@ -13,6 +13,7 @@ Matrix4f rotate(Vector3f eulerAngles);
 Matrix4f rotate_x(float radians);
 Matrix4f rotate_y(float radians);
 Matrix4f rotate_z(float radians);
+Matrix4f look_at(Vector3f camera_pos, Vector3f point, Vector3f up);
 
 
 #endif //SOFTWARE_RENDERER_AFFINETRANSFORMS_H

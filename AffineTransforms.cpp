@@ -49,3 +49,19 @@ Matrix4f rotate_z(float radians) {
 Matrix4f rotate(Vector3f eulerAngles) {
   return rotate_z(eulerAngles.z()) * rotate_y(eulerAngles.y()) * rotate_x(eulerAngles.x());
 }
+
+Matrix4f look_at(Vector3f camera_pos, Vector3f point, Vector3f up) {
+  // These are the x' y' z' axes for our new coordinate basis
+  Vector3f z = (camera_pos - point).normalized();
+  Vector3f x = up.cross(z).normalized();
+  Vector3f y = z.cross(x).normalized();
+
+  Matrix4f view_matrix;
+  view_matrix << x[0], x[1], x[2], 0,
+                 y[0], y[1], y[2], 0,
+                 z[0], z[1], z[2], 0,
+                    0,    0,    0, 1;
+
+
+  return translate(point * -1) * view_matrix;
+}

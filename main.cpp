@@ -48,14 +48,13 @@ HandleEvent(const SDL_Event &event)
   }
 }
 
-
 Vector4f augment(Vector3f v) {
   Vector4f aug;
   aug << v.x(), v.y(), v.z(), 1;
   return aug;
 }
 
-Vector3f world2screen_ortho(const Vector3f &p, const Rasterizer &rasterizer) {
+Vector3f world2screen_ortho(const Vector3f &p) {
   return Vector3f {
       (p.x() + 1.0f) * WINDOW_WIDTH / 2,
       (p.y() + 1.0f) * WINDOW_HEIGHT / 2,
@@ -83,8 +82,6 @@ void drawWireframeHead(Rasterizer &rasterizer) {
   Color colors[]{black, white, red, green, blue, cyan, yellow};
 
   Model model("african_head.obj");
-  model.load_texture("african_head_diffuse.tga");
-
 
   for (uint32_t face_idx = 0; face_idx < model.face_count(); face_idx++) {
     for (uint32_t face_vertex = 0; face_vertex < 3; face_vertex++) {
@@ -107,9 +104,10 @@ void drawTriangles(Rasterizer &rasterizer) {
   Vector3f t0[] {Vector3f {10, 70, 0 }, Vector3f {50, 160, 0}, Vector3f{70, 80, 0}};
   Vector3f t1[] {Vector3f {180, 50, 0 },  Vector3f{150, 1, 0},   Vector3f{70, 180, 0}};
   Vector3f t2[] {Vector3f {180, 150, 0 }, Vector3f{120, 160, 0}, Vector3f{130, 180, 0}};
-  rasterizer.Triangle(t0, cyan);
-  rasterizer.Triangle(t1, yellow);
-  rasterizer.Triangle(t2, magenta);
+  Vector3f intensities(1, 1, 1);
+  rasterizer.Triangle(t0, intensities, cyan);
+  rasterizer.Triangle(t1, intensities, yellow);
+  rasterizer.Triangle(t2, intensities, magenta);
 }
 
 
@@ -129,21 +127,43 @@ void drawTriangleHead(Rasterizer &rasterizer) {
           DEPTH_RESOLUTION / 2.0f)
       );
 
-  auto camera_matrix = viewport_matrix * projection_matrix;
+  Matrix4f view_matrix = look_at(
+      CAMERA_POSITION,
+      MODEL_POSITION,
+      Vector3f(0, 1, 0)
+  );
+
+  Matrix4f model_matrix = translate(MODEL_POSITION);
+
+  Matrix4f camera_matrix = 
+    viewport_matrix * projection_matrix * 
+    view_matrix     * model_matrix;
+  Matrix4f inv_trans_camera = camera_matrix.inverse().transpose();
 
 #ifdef DEBUG
+  std::cout << "Viewport Matrix: " << std::endl;
+  std::cout << viewport_matrix << std::endl;
+  std::cout << "Projection Matrix: " << std::endl;
+  std::cout << projection_matrix << std::endl;
+  std::cout << "View Matrix: " << std::endl;
+  std::cout << view_matrix << std::endl;
+  std::cout << "Model Matrix: " << std::endl;
+  std::cout << model_matrix << std::endl;
   std::cout << "Camera Matrix: " << std::endl;
   std::cout << camera_matrix << std::endl;
+  std::cout << "Normal xForm Matrix: " << std::endl;
+  std::cout << inv_trans_camera << std::endl;
 #endif
 
   Model model("african_head.obj");
   model.load_texture("african_head_diffuse.tga");
 
+  bool skip = false;
   Vector3f screen_coords[3];
   Vector3f world_coords[3];
   Vector2f tex_coords[3];
-  Vector3f light_direction(0.0f, 0.0f, -1.0f);
-  light_direction.normalize();
+  Vector3f normals[3];
+  Vector3f intensities;
 
 
   for (uint32_t face_idx = 0; face_idx < model.face_count(); face_idx++) {
@@ -152,23 +172,37 @@ void drawTriangleHead(Rasterizer &rasterizer) {
     for (uint32_t face_vertex_idx = 0; face_vertex_idx < 3; face_vertex_idx++) {
       Vector3f vertex = model.vertex(face[face_vertex_idx][0]);
       Vector2f texture_uv = model.texture(face[face_vertex_idx][1]);
-      Vector3f normal = model.normal(face[face_vertex_idx][2]);
+      normals[face_vertex_idx] = model.normal(face[face_vertex_idx][2]);
 
       world_coords[face_vertex_idx] = vertex;
-      Vector4f screen_coords_4d = camera_matrix * augment(vertex);
-      screen_coords[face_vertex_idx] = project_3d(screen_coords_4d);
+      screen_coords[face_vertex_idx] = project_3d(camera_matrix * augment(vertex));
       tex_coords[face_vertex_idx] = texture_uv;
     }
 
-    // || AC x AB ||
-    Vector3f normal = (world_coords[2] - world_coords[0]).cross(world_coords[1] - world_coords[0]).normalized();
-    float intensity = normal.dot(light_direction);
+    for (uint32_t i = 0; i < 3; i++) {
+      Vector3f newNormal;
+      Vector4f newNormal4 = inv_trans_camera * Vector4f(normals[i].x(), normals[i].y(), normals[i].z(), 0);
+      newNormal << newNormal4.x(), newNormal4.y(), newNormal4.z();
+      newNormal.normalize();
 
-    if (intensity > 1) intensity = 1;
+      
+      /*
+      std::cout << normals[i].dot(LIGHT_DIRECTION) << ", " << normals[i] << std::endl;
+      std::cout << newNormal.dot(LIGHT_DIRECTION) << ", " << newNormal << std::endl;
+      std::cout << "---------------------------------------\n";
+      */
+      
 
-    if (intensity > 0){
-      rasterizer.Triangle(screen_coords[0], screen_coords[1], screen_coords[2], tex_coords, model, intensity);
+      intensities[i] = newNormal.dot(LIGHT_DIRECTION);
+      if (intensities[i] > 1) intensities[i] = 1;
+      if (intensities[i] < 0) intensities[i] = 0;
     }
+
+
+    if (!skip) {
+      rasterizer.Triangle(screen_coords[0], screen_coords[1], screen_coords[2], intensities, tex_coords, model);
+    }
+    skip = false;
   }
 }
 
@@ -226,7 +260,7 @@ int main(int argc, char *argv[])
 
     // display frames per second
     unsigned int fps = 1000 / ticksDiff;
-    printf("Frames per second: %u    \r", fps);
+    // printf("Frames per second: %u    \r", fps);
   }
 
   SDL_Quit();

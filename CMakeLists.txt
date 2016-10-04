@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(software_renderer)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -D_THREAD_SAFE -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -D_GNU_SOURCE -D_THREAD_SAFE -std=c++11")
 
 set(SOURCE_FILES
         main.cpp
