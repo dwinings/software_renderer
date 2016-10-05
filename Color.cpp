@@ -25,7 +25,12 @@ Color::ToUInt32() const
 	int32_t b = (int32_t)(std::min(1.0f, std::max(B, 0.0f)) * 255.0f);
 	int32_t a = (int32_t)(std::min(1.0f, std::max(A, 0.0f)) * 255.0f);
 
-	return (b << 24) | (g << 16) | (r << 8) | a;
+  // TODO: Have this method parse the SDL_PixelFormat to determine color order.
+#ifdef _MSC_VER
+	return (a << 24) | (r << 16) | (g << 8) | b;
+#else
+  return (b << 24) | (g << 16) | (r << 8) | a;
+#endif
 }
 
 Color

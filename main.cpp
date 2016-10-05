@@ -1,6 +1,7 @@
+#include <SDL/SDL.h>
+#undef main
 #include <iostream>
 #include <cmath>
-#include <SDL/SDL.h>
 #include "Definitions.h"
 #include "Rasterizer.h"
 #include "Model.h"

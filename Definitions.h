@@ -1,7 +1,14 @@
 #ifndef SOFTWARE_RENDERER_DEFINITIONS_H
 #define SOFTWARE_RENDERER_DEFINITIONS_H
 
+// Hack to work around win/mac directory structure differences.
+#ifdef _MSC_VER
+#include <Eigen/Dense>
+#else
 #include <eigen3/Eigen/Dense>
+#endif
+
+#include <stdint.h>
 
 typedef Eigen::Matrix4f Matrix4f;
 typedef Eigen::Vector2i Vector2i;
