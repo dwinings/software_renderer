@@ -30,6 +30,8 @@ struct GouraudShader : public IShader {
 
     vertex = project_3d(augmented_multiply(camera_matrix,    vertex, 1));
     normal =       chop(augmented_multiply(inv_trans_camera, normal, 0)).normalized();
+
+    varying_tex_coords[face_vertex_idx] = model.texture(vertex_vals[1]);
     varying_intensity[face_vertex_idx] = normal.dot(LIGHT_DIRECTION);
     return vertex;
   }
@@ -39,9 +41,24 @@ struct GouraudShader : public IShader {
     color = Color(1, 1, 1, 1) * intensity;
     return false;
   }
-private:
+protected:
   Vector3f varying_intensity;
+  Vector2f varying_tex_coords[3];
   Model model;
+};
+
+struct DiffuseShader : public GouraudShader {
+  DiffuseShader(Model &_model) : GouraudShader(_model) {};
+  virtual bool fragment(Vector3f bary_coords, Color &color) {
+    Vector2f uv(0, 0);
+    for (uint32_t idx = 0; idx < 3; idx++) {
+      uv += bary_coords[idx] * varying_tex_coords[idx];
+    }
+
+    float intensity = varying_intensity.dot(bary_coords);
+    color = model.diffuse_color(uv[0], uv[1]) * intensity;
+    return false;
+  }
 };
 
 #endif //SOFTWARE_RENDERER_SHADERS_H

@@ -16,7 +16,7 @@ void drawShaderHead(Rasterizer &rasterizer) {
   Model model("african_head.obj");
   model.load_texture("african_head_diffuse.tga");
   Vector3f screen_coords[3];
-  GouraudShader shader(model);
+  DiffuseShader shader(model);
 
   for (uint32_t face_idx = 0; face_idx < model.face_count(); face_idx++) {
     std::vector<Vector3i> face = model.face(face_idx);

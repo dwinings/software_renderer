@@ -101,7 +101,6 @@ void drawTriangleHead(Rasterizer &rasterizer) {
       Vector2f texture_uv = model.texture(face[face_vertex_idx][1]);
       normals[face_vertex_idx] = model.normal(face[face_vertex_idx][2]);
 
-      Vector4f yo(vertex.x(), vertex.y(), vertex.z(), 1);
       screen_coords[face_vertex_idx] = project_3d(augmented_multiply(camera_matrix, vertex, 1));
       tex_coords[face_vertex_idx] = texture_uv;
     }
