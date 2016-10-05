@@ -329,9 +329,9 @@ void Rasterizer::TrianglePixelMethodTextured(Vector3f p0, Vector3f p1, Vector3f 
       pixel.z() += bary.z() * p2.z();
 
       if (z_buffer[zbuf_idx] < pixel.z()) {
-        Vector2f tex_point = texture_coords[0] * bary.x() + texture_coords[1] * bary.y() + texture_coords[2] * bary.z();
+        Vector2f uv = texture_coords[0] * bary.x() + texture_coords[1] * bary.y() + texture_coords[2] * bary.z();
         float intensity = intensities[0] * bary.x() + intensities[1] * bary.y() + intensities[2] * bary.z();
-        Color color = model.diffuse_color(tex_point.x(), tex_point.y()) * intensity;
+        Color color = model.diffuse_color(uv) * intensity;
         color.A = 1;
 
 

@@ -56,7 +56,21 @@ struct DiffuseShader : public GouraudShader {
     }
 
     float intensity = varying_intensity.dot(bary_coords);
-    color = model.diffuse_color(uv[0], uv[1]) * intensity;
+    color = model.diffuse_color(uv) * intensity;
+    return false;
+  }
+};
+
+struct NormalMapDiffuseShader : public GouraudShader {
+  NormalMapDiffuseShader(Model &_model) : GouraudShader(_model) {};
+  virtual bool fragment(Vector3f bary_coords, Color &color) {
+    Vector2f uv(0, 0);
+    for (uint32_t idx = 0; idx < 3; idx++) {
+      uv += bary_coords[idx] * varying_tex_coords[idx];
+    }
+
+    float intensity = model.normal(uv).dot(LIGHT_DIRECTION);
+    color = model.diffuse_color(uv) * intensity;
     return false;
   }
 };

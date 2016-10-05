@@ -2,6 +2,7 @@
 #undef main
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 #include "Definitions.h"
 #include "Rasterizer.h"
 #include "Model.h"
@@ -13,8 +14,13 @@
 
 
 void drawShaderHead(Rasterizer &rasterizer) {
+  std::cerr << "Loading model assets...";
   Model model("african_head.obj");
-  model.load_texture("african_head_diffuse.tga");
+  std::cerr << "Loading texture... ";
+  model.load_texture("grid.tga");
+  std::cerr << "Loading normals... ";
+  model.load_normal_texture("african_head_nm.tga");
+
   Vector3f screen_coords[3];
   DiffuseShader shader(model);
 
@@ -23,7 +29,6 @@ void drawShaderHead(Rasterizer &rasterizer) {
     for (uint32_t face_vertex_idx = 0; face_vertex_idx < 3; face_vertex_idx++) {
       screen_coords[face_vertex_idx] = shader.vertex(face_idx, face_vertex_idx);
     }
-
     rasterizer.Triangle(screen_coords, shader);
   }
 }
@@ -58,6 +63,51 @@ HandleEvent(const SDL_Event &event)
   }
 }
 
+void load_icon(const char* path) {
+    SDL_Surface *Icon;														// The icon itself
+    Uint8       *Pixels, *Mask;												// We need a mask and a pointer for the raw image
+    int         i, mlen;													// Iterator and a store variable
+    Icon = SDL_LoadBMP(path);												// We load the bmp file
+
+    if (Icon == NULL) {
+      return;
+    }
+
+    if ((Icon->w % 8) != 0) {
+      SDL_FreeSurface(Icon);
+      return;
+    }
+
+    if (!Icon->format->palette) {
+      SDL_FreeSurface(Icon);
+      return;
+    }
+
+    SDL_SetColorKey(Icon, SDL_SRCCOLORKEY, *((Uint8 *)Icon->pixels));
+    Pixels = (Uint8 *)Icon->pixels;
+    mlen = Icon->w*Icon->h;
+    if (!(Mask = (Uint8 *)malloc(mlen / 8))) {
+      SDL_FreeSurface(Icon);
+      return;
+    }
+
+    memset(Mask, 0, mlen / 8);
+    for (i = 0; i<mlen;) {
+
+      if (Pixels[i] != *Pixels) {
+        Mask[i / 8] |= 0x01;	
+      }
+      ++i;
+      if ((i % 8) != 0) {
+        Mask[i / 8] <<= 1;
+      }
+    }
+
+    SDL_WM_SetIcon(Icon, Mask);
+    SDL_FreeSurface(Icon);
+    return;
+}
+
 int main(int argc, char *argv[])
 {
   // initialize SDL
@@ -66,6 +116,8 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  SDL_WM_SetCaption("Software Renderer", "triangle");
+  load_icon((MODELS_DIR + "icon.bmp").c_str());
 
   // create window for drawing
   SDL_Surface *screen = SDL_SetVideoMode(WINDOW_WIDTH, WINDOW_HEIGHT, 32, SDL_SWSURFACE);
@@ -90,9 +142,7 @@ int main(int argc, char *argv[])
     }
 
 
-    /*
-// BEGIN MAIN LOOP CODE
-     */
+    // BEGIN MAIN LOOP CODE
 
     // END MAIN LOOP CODE
 
@@ -103,16 +153,21 @@ int main(int argc, char *argv[])
 
     // calculate the number of seconds that
     // have passed since the last update
-    unsigned int ticks = SDL_GetTicks();
-    unsigned int ticksDiff = ticks - lastTicks;
-    if(ticksDiff == 0)
-      continue;
-    float time = ticksDiff / 1000.0f;
-    lastTicks = ticks;
+    int time_ms = SDL_GetTicks();
+    int elapsed_ms = time_ms - lastTicks;
+    uint32_t sleepTime = std::max(0, 16 - elapsed_ms);
 
-    // display frames per second
-    unsigned int fps = 1000 / ticksDiff;
-    // printf("Frames per second: %u    \r", fps);
+    float time = elapsed_ms / 1000.0f;
+    lastTicks = time_ms;
+
+    SDL_Delay(sleepTime);
+
+    /*
+    if (elapsed_ms > 0) {
+      int fps = 1000 / elapsed_ms;
+      printf("Frames per second: %u    \r", fps);
+    }
+    */
   }
 
   SDL_Quit();

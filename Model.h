@@ -19,18 +19,21 @@ private:
   std::vector<Vector2f> textures; // uv coordinates for the texture.
   std::vector<Vector3f> normals;
   TGAImage texture_image;
+  TGAImage normal_image;
 public:
   Model(const char *filename);
   ~Model();
   bool load_texture(std::string path);
+  bool load_normal_texture(std::string path);
   int vertex_count();
   int face_count();
   int tex_count();
   int normals_count();
-  Color diffuse_color(float u, float v) const;
+  Color diffuse_color(const Vector2f &uv) const;
   Vector3f vertex(int idx);
   Vector2f texture(int idx);
   Vector3f normal(int idx);
+  Vector3f normal(Vector2f & uv) const;
   std::vector<Vector3i> face(int idx);
 };
 

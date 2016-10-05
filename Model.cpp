@@ -80,11 +80,31 @@ bool Model::load_texture(std::string path) {
   return true;
 }
 
-Color Model::diffuse_color(float u, float v) const {
+bool Model::load_normal_texture(std::string path) {
+  bool result = normal_image.read_tga_file((MODELS_DIR + path).c_str());
+  if (!result) {
+    std::cerr << "Failed to read normal texture." << std::endl;
+    return false;
+  }
+
+  normal_image.flip_vertically();
+  return true;
+}
+
+Color Model::diffuse_color(const Vector2f &uv) const {
   return Color(texture_image.get(
-      (uint32_t) (u * texture_image.get_width()),
-      (uint32_t) (v * texture_image.get_height())
+      (uint32_t) (uv[0] * texture_image.get_width()),
+      (uint32_t) (uv[1] * texture_image.get_height())
   ));
+}
+
+Vector3f Model::normal(Vector2f &uv) const {
+  TGAColor col = normal_image.get(uv[0] * normal_image.get_width(), uv[1] * normal_image.get_height());
+  Vector3f result;
+  for (int i = 0; i < 3; i++) {
+    result[2 - i] = (float)col[i] / (255.0f * 2.0f) - 1.0f;
+  }
+  return result.normalized();
 }
 
 int Model::vertex_count() {
