@@ -17,9 +17,9 @@ void drawShaderHead(Rasterizer &rasterizer) {
   std::cerr << "Loading model assets...";
   Model model("african_head.obj");
   std::cerr << "Loading texture... ";
-  model.load_texture("african_head_diffuse.tga");
+  model.load_texture("african_head_diffuse.tga.gz");
   std::cerr << "Loading normals... ";
-  model.load_normal_texture("african_head_nm.tga");
+  model.load_normal_texture("african_head_nm.tga.gz");
 
   Vector3f screen_coords[3];
   NormalMapDiffuseShader shader(model);
@@ -64,48 +64,49 @@ HandleEvent(const SDL_Event &event)
 }
 
 void load_icon(const char* path) {
-    SDL_Surface *Icon;														// The icon itself
-    Uint8       *Pixels, *Mask;												// We need a mask and a pointer for the raw image
-    int         i, mlen;													// Iterator and a store variable
-    Icon = SDL_LoadBMP(path);												// We load the bmp file
+  SDL_Surface *Icon;														// The icon itself
+  Uint8       *Pixels, *Mask;												// We need a mask and a pointer for the raw image
+  int         i, mlen;													// Iterator and a store variable
+  Icon = SDL_LoadBMP(path);												// We load the bmp file
 
-    if (Icon == NULL) {
-      return;
-    }
+  if (Icon == NULL) {
+    return;
+  }
 
-    if ((Icon->w % 8) != 0) {
-      SDL_FreeSurface(Icon);
-      return;
-    }
-
-    if (!Icon->format->palette) {
-      SDL_FreeSurface(Icon);
-      return;
-    }
-
-    SDL_SetColorKey(Icon, SDL_SRCCOLORKEY, *((Uint8 *)Icon->pixels));
-    Pixels = (Uint8 *)Icon->pixels;
-    mlen = Icon->w*Icon->h;
-    if (!(Mask = (Uint8 *)malloc(mlen / 8))) {
-      SDL_FreeSurface(Icon);
-      return;
-    }
-
-    memset(Mask, 0, mlen / 8);
-    for (i = 0; i<mlen;) {
-
-      if (Pixels[i] != *Pixels) {
-        Mask[i / 8] |= 0x01;	
-      }
-      ++i;
-      if ((i % 8) != 0) {
-        Mask[i / 8] <<= 1;
-      }
-    }
-
-    SDL_WM_SetIcon(Icon, Mask);
+  if ((Icon->w % 8) != 0) {
     SDL_FreeSurface(Icon);
     return;
+  }
+
+  if (!Icon->format->palette) {
+    SDL_FreeSurface(Icon);
+    return;
+  }
+
+  SDL_SetColorKey(Icon, SDL_SRCCOLORKEY, *((Uint8 *)Icon->pixels));
+  Pixels = (Uint8 *)Icon->pixels;
+  mlen = Icon->w*Icon->h;
+  if (!(Mask = (Uint8 *)malloc(mlen / 8))) {
+    SDL_FreeSurface(Icon);
+    return;
+  }
+
+  // Dark icon-alpha-ing magic.
+  memset(Mask, 0, mlen / 8);
+  for (i = 0; i<mlen;) {
+
+    if (Pixels[i] != *Pixels) {
+      Mask[i / 8] |= 0x01;
+    }
+    ++i;
+    if ((i % 8) != 0) {
+      Mask[i / 8] <<= 1;
+    }
+  }
+
+  SDL_WM_SetIcon(Icon, Mask);
+  SDL_FreeSurface(Icon);
+  return;
 }
 
 int main(int argc, char *argv[])

@@ -5,6 +5,7 @@
 #include <vector>
 #include "Color.h"
 #include "Utils.h"
+#include <zlib.h>
 
 // This weird syntax initializes vertices and faces
 // It's called an "Initializer List"
@@ -72,76 +73,106 @@ Model::~Model() {
 }
 
 bool Model::load_image(std::string path, TGAImage &dst) {
-  uint32_t chunk_size = 1024 * 256;
-  bool result = false;
+  uint32_t    chunk_size = 1024 * 256;
+  bool        load_successful = true;
   std::string basename, ext;
-  auto parts = split(path, '.');
-  basename = parts[0];
-  ext = parts[1];
 
-  if (ext == "gz") {
-    // Do zip stuff in the future.
+  // Find the file extension and decompress based on that.
+  uint32_t pivot = path.rfind(".", path.length());
+  basename = path.substr(0, pivot);
+  ext = path.substr(pivot, path.length() - pivot);
 
-    // Panic badly.
-    assert(false);
-    /*
-    auto file = fopen(path.c_str(), "r");
+  if (ext == ".gz") {
+    FILE*                 file;
+    uint32_t              file_size;
+    int32_t               zlib_result;
+    uint8_t*              zlib_input = 0;
+    uint8_t               zlib_output[chunk_size];
+    std::vector<uint8_t>* decompressed = new std::vector<uint8_t>();
+    z_stream              zstream;
+
+    /////////// Read the file into 'compressed'
+    file = fopen((MODELS_DIR + path).c_str(), "r");
+    if (!file || ferror(file)) {
+      std::cerr << "Error opening file.\n";
+      load_successful = false;
+      goto cleanup;
+    }
     fseek(file, 0, SEEK_END);
-    auto file_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    
-    if (file < 0) {
-      std::cerr << "Error opening file (I think).\n";
-      return false;
-    }
-    // Not planning to decompress a large file really.
-    uint8_t *compressed = new uint8_t[file_size];
-    uint8_t *decompressed = new uint8_t[chunk_size];
-    std::ostringstream uncompressed_data;
-    z_stream decomp_stream;
-    decomp_stream.zalloc = Z_NULL;
-    decomp_stream.zfree = Z_NULL;
-    decomp_stream.opaque = Z_NULL;
-    decomp_stream.avail_in = 0;
-    decomp_stream.next_in = Z_NULL;
-    auto ret = inflateInit(&decomp_stream);
-    if (ret != Z_OK) {
-      std::cerr << "Failed to read zip.\n";
-    }
-
-    decomp_stream.avail_in = fread(compressed, 1, file_size, file);
-    if (ferror(file)) {
-      std::cerr << "Error reading zip.\n";
-    }
-    if (decomp_stream.avail_in == 0) {
-      std::cerr << "Successfully read zip.\n";
-    }
-    decomp_stream.next_in = compressed;
-
-    do {
-      decomp_stream.avail_out = file_size;
-      decomp_stream.next_out = decompressed;
-      ret = inflate(&decomp_stream, Z_NO_FLUSH);
-      uncompressed_data << decompressed;
-      assert(ret != Z_STREAM_ERROR);
-    } while (decomp_stream.avail_out == 0);
-
-
+    file_size = ftell(file);
+    rewind(file);
+    zlib_input = new uint8_t[file_size];
+    zstream.avail_in = fread(zlib_input, 1, file_size, file);
     fclose(file);
-    delete compressed;
+    /////////////////////////////////////////////////////
 
-    auto uncompressed_istream = std::istringstream(uncompressed_data.str());
-    dst.read_tga_data(uncompressed_istream);
-    */
+    /////////// Prep zlib for decompression loop
+    zstream.zalloc = Z_NULL;
+    zstream.zfree = Z_NULL;
+    zstream.opaque = Z_NULL;
+    zstream.next_in = Z_NULL;
+
+    zlib_result = inflateInit2(&zstream, 16 + MAX_WBITS);
+    if (zlib_result != Z_OK) {
+      std::cerr << "Failed to read zip.\n";
+      load_successful = false;
+      goto cleanup;
+    }
+
+    if (ferror(file)) {
+      std::cerr << "Error reading gzip.\n";
+      load_successful = false;
+      goto cleanup;
+    }
+
+    if (zstream.avail_in == file_size) {
+      std::cerr << "successfully read valid gzip.\n";
+    }
+
+    zstream.next_in = zlib_input;
+    //////////////////////////////////////////////////////
+
+    ////////////// Main decompression spin loop.
+    do {
+      zstream.avail_out = chunk_size;
+      zstream.next_out = zlib_output;
+      zlib_result = inflate(&zstream, Z_NO_FLUSH);
+      if (zlib_result == Z_MEM_ERROR) {
+        std::cerr << "Ran out of memory decompressing. Load failed.";
+        load_successful = false;
+        goto cleanup;
+      }
+      if (zlib_result == Z_DATA_ERROR) {
+        std::cerr << "Bad zip file.\n";
+        load_successful = false;
+        goto cleanup;
+      }
+      if (zlib_result == Z_BUF_ERROR) {
+        continue;
+      }
+      // Here is where we copy from zlib_output buffer into our vector that will hold the decompressed file.
+      decompressed->insert(decompressed->end(), zlib_output, zlib_output + (chunk_size - zstream.avail_out));
+      assert(zlib_result != Z_STREAM_ERROR);
+    } while (zstream.avail_out == 0);
+    ////////////////////////////////////////////////////////
+
+cleanup:
+    if (load_successful) {
+      vector_streambuf vector_stream(*decompressed);
+      std::istream file_contents(&vector_stream);
+      load_successful = load_successful && dst.read_tga_data(file_contents);
+    }
+    if (decompressed != NULL) delete(decompressed);
+    if (zlib_input   != NULL) delete[](zlib_input);
   }
   else {
-    result = dst.read_tga_file((MODELS_DIR + path).c_str());
+    load_successful = dst.read_tga_file((MODELS_DIR + path).c_str());
   }
 
-  if (result) {
+  if (load_successful) {
     dst.flip_vertically();
   }
-  return result;
+  return load_successful;
 }
 
 bool Model::load_texture(std::string path) {

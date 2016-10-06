@@ -3,6 +3,12 @@
 
 #include <string>
 #include <vector>
+#include <streambuf>
+#include <istream>
+
+struct vector_streambuf : std::streambuf {
+  vector_streambuf(std::vector<uint8_t> &vec);
+};
 
 template <class T>
 constexpr const T& clamp(const T &v, const T &low, const T &hi) {

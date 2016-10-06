@@ -87,6 +87,7 @@ bool TGAImage::read_tga_file(const char *filename) {
   }
   read_tga_data(in);
   in.close();
+  return true;
 }
 
 bool TGAImage::load_rle_data(std::istream &in) {
