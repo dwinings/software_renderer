@@ -1,9 +1,10 @@
+#include "Model.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include "Model.h"
 #include "Color.h"
+#include "Utils.h"
 
 // This weird syntax initializes vertices and faces
 // It's called an "Initializer List"
@@ -70,25 +71,85 @@ Model::Model(const char *filename) : vertices(), faces(), textures(), normals(),
 Model::~Model() {
 }
 
-bool Model::load_texture(std::string path) {
-  bool result = texture_image.read_tga_file((MODELS_DIR + path).c_str());
-  if (!result) {
-    std::cerr << "Failed to read head texture." << std::endl;
-    return false;
+bool Model::load_image(std::string path, TGAImage &dst) {
+  uint32_t chunk_size = 1024 * 256;
+  bool result = false;
+  std::string basename, ext;
+  auto parts = split(path, '.');
+  basename = parts[0];
+  ext = parts[1];
+
+  if (ext == "gz") {
+    // Do zip stuff in the future.
+
+    // Panic badly.
+    assert(false);
+    /*
+    auto file = fopen(path.c_str(), "r");
+    fseek(file, 0, SEEK_END);
+    auto file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    
+    if (file < 0) {
+      std::cerr << "Error opening file (I think).\n";
+      return false;
+    }
+    // Not planning to decompress a large file really.
+    uint8_t *compressed = new uint8_t[file_size];
+    uint8_t *decompressed = new uint8_t[chunk_size];
+    std::ostringstream uncompressed_data;
+    z_stream decomp_stream;
+    decomp_stream.zalloc = Z_NULL;
+    decomp_stream.zfree = Z_NULL;
+    decomp_stream.opaque = Z_NULL;
+    decomp_stream.avail_in = 0;
+    decomp_stream.next_in = Z_NULL;
+    auto ret = inflateInit(&decomp_stream);
+    if (ret != Z_OK) {
+      std::cerr << "Failed to read zip.\n";
+    }
+
+    decomp_stream.avail_in = fread(compressed, 1, file_size, file);
+    if (ferror(file)) {
+      std::cerr << "Error reading zip.\n";
+    }
+    if (decomp_stream.avail_in == 0) {
+      std::cerr << "Successfully read zip.\n";
+    }
+    decomp_stream.next_in = compressed;
+
+    do {
+      decomp_stream.avail_out = file_size;
+      decomp_stream.next_out = decompressed;
+      ret = inflate(&decomp_stream, Z_NO_FLUSH);
+      uncompressed_data << decompressed;
+      assert(ret != Z_STREAM_ERROR);
+    } while (decomp_stream.avail_out == 0);
+
+
+    fclose(file);
+    delete compressed;
+
+    auto uncompressed_istream = std::istringstream(uncompressed_data.str());
+    dst.read_tga_data(uncompressed_istream);
+    */
   }
-  texture_image.flip_vertically();
-  return true;
+  else {
+    result = dst.read_tga_file((MODELS_DIR + path).c_str());
+  }
+
+  if (result) {
+    dst.flip_vertically();
+  }
+  return result;
+}
+
+bool Model::load_texture(std::string path) {
+  return load_image(path, texture_image);
 }
 
 bool Model::load_normal_texture(std::string path) {
-  bool result = normal_image.read_tga_file((MODELS_DIR + path).c_str());
-  if (!result) {
-    std::cerr << "Failed to read normal texture." << std::endl;
-    return false;
-  }
-
-  normal_image.flip_vertically();
-  return true;
+  return load_image(path, normal_image);
 }
 
 Color Model::diffuse_color(const Vector2f &uv) const {
@@ -104,7 +165,7 @@ Vector3f Model::normal(Vector2f &uv) const {
   for (int i = 0; i < 3; i++) {
     result[2 - i] = (float)col[i] / (255.0f * 2.0f) - 1.0f;
   }
-  return result.normalized();
+  return (-1 * result.normalized());
 }
 
 int Model::vertex_count() {

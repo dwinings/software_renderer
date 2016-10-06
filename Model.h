@@ -20,6 +20,7 @@ private:
   std::vector<Vector3f> normals;
   TGAImage texture_image;
   TGAImage normal_image;
+  bool load_image(std::string path, TGAImage &dest);
 public:
   Model(const char *filename);
   ~Model();

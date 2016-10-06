@@ -32,20 +32,10 @@ TGAImage & TGAImage::operator =(const TGAImage &img) {
   return *this;
 }
 
-bool TGAImage::read_tga_file(const char *filename) {
-  if (data) delete [] data;
-  data = NULL;
-  std::ifstream in;
-  in.open (filename, std::ios::binary);
-  if (!in.is_open()) {
-    std::cerr << "can't open file " << filename << "\n";
-    in.close();
-    return false;
-  }
+bool TGAImage::read_tga_data(std::istream &in) {
   TGA_Header header;
   in.read((char *)&header, sizeof(header));
   if (!in.good()) {
-    in.close();
     std::cerr << "an error occured while reading the header\n";
     return false;
   }
@@ -53,7 +43,6 @@ bool TGAImage::read_tga_file(const char *filename) {
   height  = header.height;
   bytespp = header.bitsperpixel>>3;
   if (width<=0 || height<=0 || (bytespp!=GRAYSCALE && bytespp!=RGB && bytespp!=RGBA)) {
-    in.close();
     std::cerr << "bad bpp (or width/height) value\n";
     return false;
   }
@@ -62,18 +51,15 @@ bool TGAImage::read_tga_file(const char *filename) {
   if (3==header.datatypecode || 2==header.datatypecode) {
     in.read((char *)data, nbytes);
     if (!in.good()) {
-      in.close();
       std::cerr << "an error occured while reading the data\n";
       return false;
     }
   } else if (10==header.datatypecode||11==header.datatypecode) {
     if (!load_rle_data(in)) {
-      in.close();
       std::cerr << "an error occured while reading the data\n";
       return false;
     }
   } else {
-    in.close();
     std::cerr << "unknown file format " << (int)header.datatypecode << "\n";
     return false;
   }
@@ -86,11 +72,24 @@ bool TGAImage::read_tga_file(const char *filename) {
 #ifdef DEBUG
   std::cerr << "Texture Dimensions: \n  " << width << "x" << height << "/" << bytespp*8 << "\n";
 #endif
-  in.close();
   return true;
 }
 
-bool TGAImage::load_rle_data(std::ifstream &in) {
+bool TGAImage::read_tga_file(const char *filename) {
+  if (data) delete [] data;
+  data = NULL;
+  std::ifstream in;
+  in.open (filename, std::ios::binary);
+  if (!in.is_open()) {
+    std::cerr << "can't open file " << filename << "\n";
+    in.close();
+    return false;
+  }
+  read_tga_data(in);
+  in.close();
+}
+
+bool TGAImage::load_rle_data(std::istream &in) {
   unsigned long pixelcount = width*height;
   unsigned long currentpixel = 0;
   unsigned long currentbyte  = 0;

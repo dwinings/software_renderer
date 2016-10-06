@@ -66,7 +66,7 @@ protected:
   int height;
   int bytespp;
 
-  bool   load_rle_data(std::ifstream &in);
+  bool   load_rle_data(std::istream &in);
   bool unload_rle_data(std::ofstream &out);
 public:
   enum Format {
@@ -76,6 +76,7 @@ public:
   TGAImage();
   TGAImage(int w, int h, int bpp);
   TGAImage(const TGAImage &img);
+  bool read_tga_data(std::istream &in);
   bool read_tga_file(const char *filename);
   bool write_tga_file(const char *filename, bool rle=true);
   bool flip_horizontally();

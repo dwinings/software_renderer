@@ -6,6 +6,7 @@
 #define SOFTWARE_RENDERER_SHADERS_H
 
 #include "Rasterizer.h"
+#include "Utils.h"
 
 // 4 Core rendering matrices
 static Matrix4f projection_matrix = projection((CAMERA_POSITION - MODEL_POSITION).norm());
@@ -69,7 +70,7 @@ struct NormalMapDiffuseShader : public GouraudShader {
       uv += bary_coords[idx] * varying_tex_coords[idx];
     }
 
-    float intensity = model.normal(uv).dot(LIGHT_DIRECTION);
+    float intensity = clamp(model.normal(uv).dot(LIGHT_DIRECTION), 0.0f, 1.0f);
     color = model.diffuse_color(uv) * intensity;
     return false;
   }

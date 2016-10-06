@@ -17,12 +17,12 @@ void drawShaderHead(Rasterizer &rasterizer) {
   std::cerr << "Loading model assets...";
   Model model("african_head.obj");
   std::cerr << "Loading texture... ";
-  model.load_texture("grid.tga");
+  model.load_texture("african_head_diffuse.tga");
   std::cerr << "Loading normals... ";
   model.load_normal_texture("african_head_nm.tga");
 
   Vector3f screen_coords[3];
-  DiffuseShader shader(model);
+  NormalMapDiffuseShader shader(model);
 
   for (uint32_t face_idx = 0; face_idx < model.face_count(); face_idx++) {
     std::vector<Vector3i> face = model.face(face_idx);
