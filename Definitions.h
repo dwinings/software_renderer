@@ -27,12 +27,17 @@ const uint32_t WINDOW_HEIGHT = 800;
 
 #define DEPTH_RESOLUTION 255
 
-// Wow, we can move and look at things in worldspace now!
-#define MODEL_POSITION Vector3f(0, 0, 0)
-#define MODEL_ROTATION Vector3f(0, -1 * M_PI / 8.0f, 0)
-#define CAMERA_POSITION Vector3f(0, 1, 3)
-#define LIGHT_DIRECTION Vector3f(1, 1, 1).normalized()
+extern Vector3f model_position;
+extern Vector3f model_rotation;
+extern Vector3f camera_position;
+extern Vector3f light_direction;
 
+extern Matrix4f projection_matrix;
+extern Matrix4f viewport_matrix;
+extern Matrix4f view_matrix;
+extern Matrix4f model_matrix;
+extern Matrix4f camera_matrix;
+extern Matrix4f camera_inv_trans;
 
 #include "AffineTransforms.h"
 

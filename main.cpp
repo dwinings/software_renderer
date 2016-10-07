@@ -11,18 +11,56 @@
 #include "OldMainRoutines.h"
 #include "Shaders.h"
 
+Vector3f model_position  = Vector3f(0, 0, 0);
+Vector3f model_rotation  = Vector3f(0, -1 * M_PI / 8.0f, 0);
+Vector3f camera_position = Vector3f(0, 1, 3);
+Vector3f light_direction = Vector3f(1, 1, 1).normalized();
+
+Matrix4f projection_matrix;
+Matrix4f viewport_matrix;
+Matrix4f view_matrix;
+Matrix4f model_matrix;
+
+// Put 'em together
+Matrix4f camera_matrix;
+Matrix4f camera_inv_trans;
+
+void update_scene_matrices() {
+  projection_matrix = projection((camera_position - model_position).norm());
+  viewport_matrix = viewport(WINDOW_WIDTH, WINDOW_HEIGHT, RENDER_SCALE);
+  view_matrix = look_at(camera_position, model_position, Vector3f(0, 1, 0));
+  model_matrix = translate(model_position) * rotate(model_rotation);
+
+  // Put 'em together
+  camera_matrix =
+    viewport_matrix * projection_matrix *
+    model_matrix    * view_matrix;
+
+  inv_trans_camera = camera_matrix.inverse().transpose().eval();
+
+#ifdef DEBUG
+  std::cout << "Viewport Matrix: " << std::endl;
+  std::cout << viewport_matrix << std::endl;
+  std::cout << "Projection Matrix: " << std::endl;
+  std::cout << projection_matrix << std::endl;
+  std::cout << "View Matrix: " << std::endl;
+  std::cout << view_matrix << std::endl;
+  std::cout << "Model Matrix: " << std::endl;
+  std::cout << model_matrix << std::endl;
+  std::cout << "Camera Matrix: " << std::endl;
+  std::cout << camera_matrix << std::endl;
+  std::cout << "Normal xForm Matrix: " << std::endl;
+  std::cout << inv_trans_camera << std::endl;
+#endif
+}
 
 
-void drawShaderHead(Rasterizer &rasterizer) {
-  std::cerr << "Loading model assets...";
-  Model model("african_head.obj");
-  std::cerr << "Loading texture... ";
-  model.load_texture("african_head_diffuse.tga.gz");
-  std::cerr << "Loading normals... ";
-  model.load_normal_texture("african_head_nm.tga.gz");
-
+void drawShaderModel(Rasterizer &rasterizer, Model &model) {
+  long time_start, time_elapsed;
   Vector3f screen_coords[3];
   NormalMapDiffuseShader shader(model);
+
+  time_start = SDL_GetTicks();
 
   for (uint32_t face_idx = 0; face_idx < model.face_count(); face_idx++) {
     std::vector<Vector3i> face = model.face(face_idx);
@@ -31,10 +69,15 @@ void drawShaderHead(Rasterizer &rasterizer) {
     }
     rasterizer.Triangle(screen_coords, shader);
   }
+
+  time_elapsed = SDL_GetTicks() - time_start;
+
+  std::cerr << "Rendered frame in " << time_elapsed << "ms.\n";
 }
 
 
 static bool g_Running = true;
+static bool g_redraw = true;
 
 static void
 HandleKeyEvent(const SDL_Event &event)
@@ -44,6 +87,30 @@ HandleKeyEvent(const SDL_Event &event)
       break;
     case SDLK_ESCAPE:
       g_Running = false;
+      break;
+    case SDLK_RIGHT:
+      model_rotation[1] += (M_PI / 8.0f);
+      g_redraw = true;
+      break;
+    case SDLK_LEFT:
+      model_rotation[1] -= (M_PI / 8.0f);
+      g_redraw = true;
+      break;
+    case SDLK_UP:
+      model_rotation[0] += (M_PI / 8.0f);
+      g_redraw = true;
+      break;
+    case SDLK_DOWN:
+      model_rotation[0] -= (M_PI / 8.0f);
+      g_redraw = true;
+      break;
+    case SDLK_PAGEUP:
+      model_rotation[2] += (M_PI / 8.0f);
+      g_redraw = true;
+      break;
+    case SDLK_PAGEDOWN:
+      model_rotation[2] -= (M_PI / 8.0f);
+      g_redraw = true;
       break;
   }
 }
@@ -131,7 +198,13 @@ int main(int argc, char *argv[])
   Rasterizer rasterizer;
   rasterizer.SetFrameBuffer((uint32_t*)screen->pixels, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-  drawShaderHead(rasterizer);
+  std::cerr << "Loading model assets...";
+  Model model("african_head.obj");
+  std::cerr << "Loading texture... ";
+  model.load_texture("african_head_diffuse.tga.gz");
+  std::cerr << "Loading normals... ";
+  model.load_normal_texture("african_head_nm.tga.gz");
+
   unsigned int lastTicks = SDL_GetTicks();
 
   // loop until we're done running the program
@@ -145,6 +218,13 @@ int main(int argc, char *argv[])
 
     // BEGIN MAIN LOOP CODE
 
+    if (g_redraw) {
+      SDL_FillRect(screen, NULL, 0);
+      update_scene_matrices();
+      drawShaderModel(rasterizer, model);
+      g_redraw = false;
+      rasterizer.NextFrame();
+    }
     // END MAIN LOOP CODE
 
     // lock surface and clear framebuffer

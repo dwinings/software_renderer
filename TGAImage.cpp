@@ -90,6 +90,13 @@ bool TGAImage::read_tga_file(const char *filename) {
   return true;
 }
 
+void print_state (const std::ios& stream) {
+  std::cout << "(good()=" << stream.good();
+  std::cout << ", eof()=" << stream.eof();
+  std::cout << ", fail()=" << stream.fail();
+  std::cout << ", bad()=" << stream.bad() << ")\n";
+}
+
 bool TGAImage::load_rle_data(std::istream &in) {
   unsigned long pixelcount = width*height;
   unsigned long currentpixel = 0;
@@ -97,9 +104,10 @@ bool TGAImage::load_rle_data(std::istream &in) {
   TGAColor colorbuffer;
   do {
     unsigned char chunkheader = 0;
-    chunkheader = in.get();
+    in.read((char*)&chunkheader, 1);
     if (!in.good()) {
-      std::cerr << "an error occured while reading the data\n";
+      std::cerr << "an error occured while reading the data: ";
+      print_state(in);
       return false;
     }
     if (chunkheader<128) {
@@ -107,7 +115,8 @@ bool TGAImage::load_rle_data(std::istream &in) {
       for (int i=0; i<chunkheader; i++) {
         in.read((char *)colorbuffer.bgra, bytespp);
         if (!in.good()) {
-          std::cerr << "an error occured while reading the header\n";
+          std::cerr << "an error occured while reading the header: ";
+          print_state(in);
           return false;
         }
         for (int t=0; t<bytespp; t++)
@@ -122,7 +131,8 @@ bool TGAImage::load_rle_data(std::istream &in) {
       chunkheader -= 127;
       in.read((char *)colorbuffer.bgra, bytespp);
       if (!in.good()) {
-        std::cerr << "an error occured while reading the header\n";
+        std::cerr << "an error occured while reading the header: ";
+        print_state(in);
         return false;
       }
       for (int i=0; i<chunkheader; i++) {
@@ -131,6 +141,7 @@ bool TGAImage::load_rle_data(std::istream &in) {
         currentpixel++;
         if (currentpixel>pixelcount) {
           std::cerr << "Too many pixels read\n";
+          print_state(in);
           return false;
         }
       }

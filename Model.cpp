@@ -73,10 +73,10 @@ Model::~Model() {
 }
 
 bool Model::load_image(std::string path, TGAImage &dst) {
-  uint32_t    uncompressed_size = 0;
-  uint32_t    chunk_size = 1024 * 256;
-  bool        load_successful = true;
-  std::string basename, ext;
+  uint32_t        uncompressed_size = 0;
+  const uint32_t  chunk_size = 1024 * 256;
+  bool            load_successful = true;
+  std::string     basename, ext;
 
   // Find the file extension and decompress based on that.
   uint32_t pivot = path.rfind(".", path.length());
@@ -103,7 +103,7 @@ bool Model::load_image(std::string path, TGAImage &dst) {
     file_size = ftell(file);
     rewind(file);
     zlib_input = new uint8_t[file_size];
-    zstream.avail_in = fread(zlib_input, 1, file_size, file);
+    fread(zlib_input, 1, file_size, file);
     fclose(file);
     /////////////////////////////////////////////////////
 
@@ -111,7 +111,8 @@ bool Model::load_image(std::string path, TGAImage &dst) {
     zstream.zalloc = Z_NULL;
     zstream.zfree = Z_NULL;
     zstream.opaque = Z_NULL;
-    zstream.next_in = Z_NULL;
+    zstream.next_in = zlib_input;
+    zstream.avail_in = file_size;
 
     zlib_result = inflateInit2(&zstream, 16 + MAX_WBITS);
     if (zlib_result != Z_OK) {
@@ -156,8 +157,10 @@ bool Model::load_image(std::string path, TGAImage &dst) {
       uncompressed_size += (chunk_size - zstream.avail_out);
       assert(zlib_result != Z_STREAM_ERROR);
     } while (zstream.avail_out == 0);
+    inflateEnd(&zstream);
     ////////////////////////////////////////////////////////
 
+    dump_stream(*decompressed, MODELS_DIR + "test.out");
     load_successful = dst.read_tga_data(*decompressed);
 
 cleanup:

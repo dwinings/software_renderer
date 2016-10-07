@@ -59,10 +59,10 @@ void drawTriangleHead(Rasterizer &rasterizer) {
   model.load_texture("african_head_diffuse.tga");
 
   // 4 Core rendering matrices
-  Matrix4f projection_matrix = projection((CAMERA_POSITION - MODEL_POSITION).norm());
+  Matrix4f projection_matrix = projection((camera_position - model_position).norm());
   Matrix4f viewport_matrix = viewport(WINDOW_WIDTH, WINDOW_HEIGHT, RENDER_SCALE);
-  Matrix4f view_matrix = look_at(CAMERA_POSITION, MODEL_POSITION, Vector3f(0, 1, 0));
-  Matrix4f model_matrix = translate(MODEL_POSITION);
+  Matrix4f view_matrix = look_at(camera_position, model_position, Vector3f(0, 1, 0));
+  Matrix4f model_matrix = translate(model_position);
 
   // Put 'em together
   Matrix4f camera_matrix =
@@ -70,7 +70,8 @@ void drawTriangleHead(Rasterizer &rasterizer) {
       view_matrix     * model_matrix;
 
   // And use this to calculate the normals later.
-  Matrix4f inv_trans_camera = camera_matrix.inverse().transpose();
+  // Eval avoids some weird Eigen matrix aliasing behavior.
+  Matrix4f inv_trans_camera = camera_matrix.inverse().transpose().eval();
 
 #ifdef DEBUG
   std::cout << "Viewport Matrix: " << std::endl;
@@ -108,7 +109,7 @@ void drawTriangleHead(Rasterizer &rasterizer) {
     for (uint32_t i = 0; i < 3; i++) {
       // Normal has to be deformed due to account for 3D projection
       Vector3f newNormal = chop(augmented_multiply(inv_trans_camera, normals[i], 0)).normalized();
-      intensities[i] = newNormal.dot(LIGHT_DIRECTION);
+      intensities[i] = newNormal.dot(light_direction);
       if (intensities[i] > 1) intensities[i] = 1;
       if (intensities[i] < 0) intensities[i] = 0;
     }

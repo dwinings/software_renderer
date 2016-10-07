@@ -8,17 +8,6 @@
 #include "Rasterizer.h"
 #include "Utils.h"
 
-// 4 Core rendering matrices
-static Matrix4f projection_matrix = projection((CAMERA_POSITION - MODEL_POSITION).norm());
-static Matrix4f viewport_matrix = viewport(WINDOW_WIDTH, WINDOW_HEIGHT, RENDER_SCALE);
-static Matrix4f view_matrix = look_at(CAMERA_POSITION, MODEL_POSITION, Vector3f(0, 1, 0));
-static Matrix4f model_matrix = translate(MODEL_POSITION) * rotate(MODEL_ROTATION);
-
-// Put 'em together
-static Matrix4f camera_matrix =
-    viewport_matrix * projection_matrix *
-    view_matrix     * model_matrix;
-
 // And use this to calculate the normals later.
 static Matrix4f inv_trans_camera = camera_matrix.inverse().transpose();
 
@@ -33,7 +22,7 @@ struct GouraudShader : public IShader {
     normal =       chop(augmented_multiply(inv_trans_camera, normal, 0)).normalized();
 
     varying_tex_coords[face_vertex_idx] = model.texture(vertex_vals[1]);
-    varying_intensity[face_vertex_idx] = normal.dot(LIGHT_DIRECTION);
+    varying_intensity[face_vertex_idx] = normal.dot(light_direction);
     return vertex;
   }
 
@@ -69,8 +58,10 @@ struct NormalMapDiffuseShader : public GouraudShader {
     for (uint32_t idx = 0; idx < 3; idx++) {
       uv += bary_coords[idx] * varying_tex_coords[idx];
     }
+    Vector3f norm = chop(augmented_multiply(camera_inv_trans, model.normal(uv), 0)).normalized();
+    float intensity = norm.dot(light_direction);
 
-    float intensity = clamp(model.normal(uv).dot(LIGHT_DIRECTION), 0.0f, 1.0f);
+    intensity = clamp(intensity, 0.0f, 1.0f);
     color = model.diffuse_color(uv) * intensity;
     return false;
   }
