@@ -8,9 +8,6 @@
 #include "Rasterizer.h"
 #include "Utils.h"
 
-// And use this to calculate the normals later.
-static Matrix4f inv_trans_camera = camera_matrix.inverse().transpose();
-
 struct GouraudShader : public IShader {
   GouraudShader(Model &_model) : model(_model) {};
   virtual Vector3f vertex(int face_idx, int face_vertex_idx) {
@@ -19,7 +16,7 @@ struct GouraudShader : public IShader {
     Vector3f normal = model.normal(vertex_vals[2]);
 
     vertex = project_3d(augmented_multiply(camera_matrix,    vertex, 1));
-    normal =       chop(augmented_multiply(inv_trans_camera, normal, 0)).normalized();
+    normal =       chop(augmented_multiply(camera_inv_trans, normal, 0)).normalized();
 
     varying_tex_coords[face_vertex_idx] = model.texture(vertex_vals[1]);
     varying_intensity[face_vertex_idx] = normal.dot(light_direction);
@@ -58,9 +55,9 @@ struct NormalMapDiffuseShader : public GouraudShader {
     for (uint32_t idx = 0; idx < 3; idx++) {
       uv += bary_coords[idx] * varying_tex_coords[idx];
     }
-    Vector3f norm = chop(augmented_multiply(camera_inv_trans, model.normal(uv), 0)).normalized();
-    float intensity = norm.dot(light_direction);
+    Vector3f normal = chop(augmented_multiply(camera_inv_trans, model.normal(uv), 0)).normalized();
 
+    float intensity = normal.dot(light_direction);
     intensity = clamp(intensity, 0.0f, 1.0f);
     color = model.diffuse_color(uv) * intensity;
     return false;

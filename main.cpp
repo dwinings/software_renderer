@@ -21,22 +21,21 @@ Matrix4f viewport_matrix;
 Matrix4f view_matrix;
 Matrix4f model_matrix;
 
-// Put 'em together
 Matrix4f camera_matrix;
 Matrix4f camera_inv_trans;
 
 void update_scene_matrices() {
+  viewport_matrix   = viewport(WINDOW_WIDTH, WINDOW_HEIGHT, RENDER_SCALE);
   projection_matrix = projection((camera_position - model_position).norm());
-  viewport_matrix = viewport(WINDOW_WIDTH, WINDOW_HEIGHT, RENDER_SCALE);
-  view_matrix = look_at(camera_position, model_position, Vector3f(0, 1, 0));
-  model_matrix = translate(model_position) * rotate(model_rotation);
+  model_matrix      = rotate(model_rotation) * translate(model_position);
+  view_matrix       = look_at(camera_position, model_position, Vector3f(0, 1, 0));
 
   // Put 'em together
   camera_matrix =
     viewport_matrix * projection_matrix *
     model_matrix    * view_matrix;
 
-  inv_trans_camera = camera_matrix.inverse().transpose().eval();
+  camera_inv_trans = camera_matrix.inverse().transpose().eval();
 
 #ifdef DEBUG
   std::cout << "Viewport Matrix: " << std::endl;
@@ -50,7 +49,7 @@ void update_scene_matrices() {
   std::cout << "Camera Matrix: " << std::endl;
   std::cout << camera_matrix << std::endl;
   std::cout << "Normal xForm Matrix: " << std::endl;
-  std::cout << inv_trans_camera << std::endl;
+  std::cout << camera_inv_trans << std::endl;
 #endif
 }
 
@@ -58,7 +57,7 @@ void update_scene_matrices() {
 void drawShaderModel(Rasterizer &rasterizer, Model &model) {
   long time_start, time_elapsed;
   Vector3f screen_coords[3];
-  NormalMapDiffuseShader shader(model);
+  DiffuseShader shader(model);
 
   time_start = SDL_GetTicks();
 
@@ -72,7 +71,7 @@ void drawShaderModel(Rasterizer &rasterizer, Model &model) {
 
   time_elapsed = SDL_GetTicks() - time_start;
 
-  std::cerr << "Rendered frame in " << time_elapsed << "ms.\n";
+  fprintf(stderr, "Rendered frame in %dms (%.0f polys/sec)\n", time_elapsed, model.face_count() * 1000 / (float)time_elapsed);
 }
 
 
@@ -221,6 +220,7 @@ int main(int argc, char *argv[])
     if (g_redraw) {
       SDL_FillRect(screen, NULL, 0);
       update_scene_matrices();
+      std::cout << "Rendering... \n";
       drawShaderModel(rasterizer, model);
       g_redraw = false;
       rasterizer.NextFrame();
