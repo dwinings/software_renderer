@@ -6,7 +6,6 @@
 #define SOFTWARE_RENDERER_MODEL_H
 
 #include <string>
-#define MODELS_DIR std::string("/Users/wisp/Code/software_renderer/models/")
 #include <vector>
 #include "TGAImage.h"
 #include "Color.h"

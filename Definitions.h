@@ -23,6 +23,8 @@ const float RENDER_SCALE = 0.9f;
 const uint32_t WINDOW_WIDTH = 800;
 const uint32_t WINDOW_HEIGHT = 800;
 
+#define MODELS_DIR std::string("/Users/wisp/Code/software_renderer/models/")
+
 #define DEPTH_RESOLUTION 255
 
 // Wow, we can move and look at things in worldspace now!

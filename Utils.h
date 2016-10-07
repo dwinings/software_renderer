@@ -6,6 +6,8 @@
 #include <streambuf>
 #include <istream>
 
+void dump_stream(std::istream &stream, std::string path);
+
 struct vector_streambuf : std::streambuf {
   vector_streambuf(std::vector<uint8_t> &vec);
 };

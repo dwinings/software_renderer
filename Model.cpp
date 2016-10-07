@@ -73,6 +73,7 @@ Model::~Model() {
 }
 
 bool Model::load_image(std::string path, TGAImage &dst) {
+  uint32_t    uncompressed_size = 0;
   uint32_t    chunk_size = 1024 * 256;
   bool        load_successful = true;
   std::string basename, ext;
@@ -88,7 +89,7 @@ bool Model::load_image(std::string path, TGAImage &dst) {
     int32_t               zlib_result;
     uint8_t*              zlib_input = 0;
     uint8_t               zlib_output[chunk_size];
-    std::vector<uint8_t>* decompressed = new std::vector<uint8_t>();
+    std::stringstream*    decompressed = new std::stringstream;
     z_stream              zstream;
 
     /////////// Read the file into 'compressed'
@@ -151,17 +152,15 @@ bool Model::load_image(std::string path, TGAImage &dst) {
         continue;
       }
       // Here is where we copy from zlib_output buffer into our vector that will hold the decompressed file.
-      decompressed->insert(decompressed->end(), zlib_output, zlib_output + (chunk_size - zstream.avail_out));
+      decompressed->write((const char *)zlib_output, chunk_size - zstream.avail_out);
+      uncompressed_size += (chunk_size - zstream.avail_out);
       assert(zlib_result != Z_STREAM_ERROR);
     } while (zstream.avail_out == 0);
     ////////////////////////////////////////////////////////
 
+    load_successful = dst.read_tga_data(*decompressed);
+
 cleanup:
-    if (load_successful) {
-      vector_streambuf vector_stream(*decompressed);
-      std::istream file_contents(&vector_stream);
-      load_successful = load_successful && dst.read_tga_data(file_contents);
-    }
     if (decompressed != NULL) delete(decompressed);
     if (zlib_input   != NULL) delete[](zlib_input);
   }
