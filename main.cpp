@@ -1,5 +1,9 @@
 #include <SDL/SDL.h>
+
+#ifdef _MSC_VER
 #undef main
+#endif
+
 #include <iostream>
 #include <cmath>
 #include <algorithm>
