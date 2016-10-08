@@ -185,6 +185,10 @@ bool Model::load_normal_texture(std::string path) {
   return load_image(path, normal_image);
 }
 
+bool Model::load_specular_texture(std::string path) {
+  return load_image(path, specular_image);
+}
+
 Color Model::diffuse_color(const Vector2f &uv) const {
   return Color(texture_image.get(
       (uint32_t) (uv[0] * texture_image.get_width()),
@@ -192,7 +196,7 @@ Color Model::diffuse_color(const Vector2f &uv) const {
   ));
 }
 
-Vector3f Model::normal(Vector2f &uv) const {
+Vector3f Model::normal(const Vector2f &uv) const {
   TGAColor col = normal_image.get(uv[0] * normal_image.get_width(), uv[1] * normal_image.get_height());
   Vector3f result;
   for (int i = 0; i < 3; i++) {
@@ -201,6 +205,11 @@ Vector3f Model::normal(Vector2f &uv) const {
     result[2 - i] = col[i] / 255.0f - 0.5f;
   }
   return result;
+}
+
+float Model::specular(const Vector2f &uv) const {
+  TGAColor col = normal_image.get(uv[0] * specular_image.get_width(), uv[1] * specular_image.get_height());
+  return (col[0] / 1.0f);
 }
 
 int Model::vertex_count() {

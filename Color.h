@@ -21,6 +21,7 @@ public:
   Color operator + (const Color &c) const;
   Color operator - (const Color &c) const;
   Color operator * (float f) const;
+  float operator[](uint32_t i) const;
   std::string str();
 private:
   static const float constexpr tcol_denom = 1.0f / 255.0f;

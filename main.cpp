@@ -63,7 +63,7 @@ void update_scene_matrices() {
 void drawShaderModel(Rasterizer &rasterizer, Model &model) {
   long time_start, time_elapsed;
   Vector3f screen_coords[3];
-  NormalMapDiffuseShader shader(model);
+  PhongShader shader(model);
 
   time_start = SDL_GetTicks();
 
@@ -209,6 +209,8 @@ int main(int argc, char *argv[])
   model.load_texture("african_head_diffuse.tga.gz");
   std::cerr << "Loading normals... ";
   model.load_normal_texture("african_head_nm.tga.gz");
+  std::cerr << "Loading specular... ";
+  model.load_specular_texture("african_head_spec.tga.gz");
 
   unsigned int lastTicks = SDL_GetTicks();
 

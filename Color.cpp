@@ -51,6 +51,22 @@ Color::operator * (float f) const
 	return Color(R * f, G * f, B * f, 1);
 }
 
+float Color::operator[](uint32_t i) const
+{
+  switch (i) {
+  case 0:
+    return R;
+  case 1:
+    return G;
+  case 2:
+    return B;
+  case 3:
+    return A;
+  default:
+    return 0.0f;
+  }
+}
+
 std::string
 Color::str() {
     char buf[100];

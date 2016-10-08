@@ -5,8 +5,14 @@
 #ifndef SOFTWARE_RENDERER_SHADERS_H
 #define SOFTWARE_RENDERER_SHADERS_H
 
-#include "Rasterizer.h"
+#include "Definitions.h"
 #include "Utils.h"
+
+struct IShader {
+  virtual ~IShader();
+  virtual Vector3f vertex(int face_idx, int vertex_idx) = 0;
+  virtual bool   fragment(Vector3f bary_coords, Color &color) = 0;
+};
 
 struct GouraudShader : public IShader {
   GouraudShader(Model &_model) : model(_model), varying_tex_coords(MatrixXf(2, 3)) {};
@@ -52,6 +58,28 @@ struct NormalMapDiffuseShader : public GouraudShader {
     float intensity = normal.dot(projected_light_direction);
     intensity       = clamp(intensity, 0.0f, 1.0f);
     color           = model.diffuse_color(uv) * intensity;
+    return false;
+  }
+};
+
+struct PhongShader : public GouraudShader {
+  PhongShader(Model &_model) : GouraudShader(_model) {};
+  virtual bool fragment(Vector3f bary_coords, Color &color) {
+    float ambient_coeff  = 0.02f;
+    float diffuse_coeff  = 1.0f;
+    float specular_coeff = 0.6f;
+    float specular_intensity;
+    float diffuse_intensity;
+    Vector2f uv     = varying_tex_coords * bary_coords;
+    Vector3f normal = chop(augmented_multiply(camera_inv_trans, model.normal(uv), 0)).normalized();
+    Vector3f reflection = (2 * normal * (normal.dot(projected_light_direction)) - projected_light_direction);
+    specular_intensity = pow(std::max<float>(reflection.z(), 0.0f), model.specular(uv));
+    diffuse_intensity = clamp(normal.dot(projected_light_direction), 0.0f, 1.0f);
+    color = model.diffuse_color(uv);
+
+    color.R = clamp(ambient_coeff + color.R * (diffuse_coeff * diffuse_intensity + specular_coeff * specular_intensity), 0.0f, 1.0f);
+    color.G = clamp(ambient_coeff + color.G * (diffuse_coeff * diffuse_intensity + specular_coeff * specular_intensity), 0.0f, 1.0f);
+    color.B = clamp(ambient_coeff + color.B * (diffuse_coeff * diffuse_intensity + specular_coeff * specular_intensity), 0.0f, 1.0f);
     return false;
   }
 };

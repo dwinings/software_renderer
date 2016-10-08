@@ -10,12 +10,7 @@
 #include "Definitions.h"
 #include "Color.h"
 #include "Model.h"
-
-struct IShader {
-  virtual ~IShader();
-  virtual Vector3f vertex(int face_idx, int vertex_idx) = 0;
-  virtual bool   fragment(Vector3f bary_coords, Color &color) = 0;
-};
+#include "Shaders.h"
 
 class Rasterizer {
 public:
