@@ -37,10 +37,9 @@ protected:
 struct DiffuseShader : public GouraudShader {
   DiffuseShader(Model &_model) : GouraudShader(_model) {};
   virtual bool fragment(Vector3f bary_coords, Color &color) {
-    Vector2f uv = varying_tex_coords * bary_coords;
-
+    Vector2f uv     = varying_tex_coords * bary_coords;
     float intensity = varying_intensity.dot(bary_coords);
-    color = model.diffuse_color(uv) * intensity;
+    color           = model.diffuse_color(uv) * intensity;
     return false;
   }
 };
@@ -48,14 +47,11 @@ struct DiffuseShader : public GouraudShader {
 struct NormalMapDiffuseShader : public GouraudShader {
   NormalMapDiffuseShader(Model &_model) : GouraudShader(_model) {};
   virtual bool fragment(Vector3f bary_coords, Color &color) {
-    Vector2f uv = varying_tex_coords * bary_coords;
-
+    Vector2f uv     = varying_tex_coords * bary_coords;
     Vector3f normal = chop(augmented_multiply(camera_inv_trans, model.normal(uv), 0)).normalized();
-    Vector3f test = model.normal(Vector2f(0.5f, 0.5f));
-
     float intensity = normal.dot(projected_light_direction);
-    intensity = clamp(intensity, 0.0f, 1.0f);
-    color = model.diffuse_color(uv) * intensity;
+    intensity       = clamp(intensity, 0.0f, 1.0f);
+    color           = model.diffuse_color(uv) * intensity;
     return false;
   }
 };
