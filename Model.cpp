@@ -196,9 +196,11 @@ Vector3f Model::normal(Vector2f &uv) const {
   TGAColor col = normal_image.get(uv[0] * normal_image.get_width(), uv[1] * normal_image.get_height());
   Vector3f result;
   for (int i = 0; i < 3; i++) {
-    result[2 - i] = (float)col[i] / (255.0f * 2.0f) - 1.0f;
+    // RGB -> XYZ, but we have the order as BGR, so BGR -> ZYX.
+    // Also we want to normalize to the range (-1, +1)
+    result[2 - i] = col[i] / 255.0f - 0.5f;
   }
-  return (-1 * result.normalized());
+  return result;
 }
 
 int Model::vertex_count() {

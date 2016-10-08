@@ -18,7 +18,8 @@
 Vector3f model_position  = Vector3f(0, 0, 0);
 Vector3f model_rotation  = Vector3f(0, -1 * M_PI / 8.0f, 0);
 Vector3f camera_position = Vector3f(0, 1, 3);
-Vector3f light_direction = Vector3f(1, 1, 1).normalized();
+Vector3f light_direction = Vector3f(0.5, 0.5, 1).normalized();
+Vector3f projected_light_direction;
 
 Matrix4f projection_matrix;
 Matrix4f viewport_matrix;
@@ -38,6 +39,7 @@ void update_scene_matrices() {
   camera_matrix =
     viewport_matrix * projection_matrix *
     model_matrix    * view_matrix;
+  projected_light_direction = project_3d(augmented_multiply(camera_matrix, light_direction, 1)).normalized();
 
   camera_inv_trans = camera_matrix.inverse().transpose().eval();
 
@@ -61,7 +63,7 @@ void update_scene_matrices() {
 void drawShaderModel(Rasterizer &rasterizer, Model &model) {
   long time_start, time_elapsed;
   Vector3f screen_coords[3];
-  DiffuseShader shader(model);
+  NormalMapDiffuseShader shader(model);
 
   time_start = SDL_GetTicks();
 
@@ -100,11 +102,11 @@ HandleKeyEvent(const SDL_Event &event)
       g_redraw = true;
       break;
     case SDLK_UP:
-      model_rotation[0] += (M_PI / 8.0f);
+      model_rotation[0] -= (M_PI / 8.0f);
       g_redraw = true;
       break;
     case SDLK_DOWN:
-      model_rotation[0] -= (M_PI / 8.0f);
+      model_rotation[0] += (M_PI / 8.0f);
       g_redraw = true;
       break;
     case SDLK_PAGEUP:

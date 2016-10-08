@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 typedef Eigen::Matrix4f Matrix4f;
+typedef Eigen::MatrixXf MatrixXf;
 typedef Eigen::Vector2i Vector2i;
 typedef Eigen::Vector2f Vector2f;
 typedef Eigen::Vector3i Vector3i;
@@ -30,6 +31,7 @@ const uint32_t WINDOW_HEIGHT = 800;
 extern Vector3f model_position;
 extern Vector3f model_rotation;
 extern Vector3f camera_position;
+extern Vector3f projected_light_direction;
 extern Vector3f light_direction;
 
 extern Matrix4f projection_matrix;
