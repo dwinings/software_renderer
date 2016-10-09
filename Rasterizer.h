@@ -45,7 +45,6 @@ private:
   void BresenhamDrawLine4(int32_t start_x, int32_t start_y, int32_t end_x, int32_t end_y, const Color &start_color, const Color &end_color);
 
   // Lesson 2
-  Vector3f Barycentric(const Vector3f &a, const Vector3f &b, const Vector3f &c, const Vector3f &point);
   void TriangleLineMethod(Vector2i p0, Vector2i p1, Vector2i p2, const Color &color);
   void TrianglePixelMethod(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f intensities, const Color &color);
   void TrianglePixelMethodTextured(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f intensities, const Vector2f *texture_coords,

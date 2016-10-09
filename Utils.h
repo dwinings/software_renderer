@@ -1,6 +1,7 @@
 #ifndef SOFTWARE_RENDERER_UTILS_H
 #define SOFTWARE_RENDERER_UTILS_H
 
+#include "Definitions.h"
 #include <string>
 #include <vector>
 #include <streambuf>
@@ -18,5 +19,7 @@ constexpr const T& clamp(const T &v, const T &low, const T &hi) {
 }
 
 std::vector<std::string> split(const std::string &s, char delim);
+
+Vector3f Barycentric(const Vector3f &a, const Vector3f &b, const Vector3f &c, const Vector3f &point);
 
 #endif

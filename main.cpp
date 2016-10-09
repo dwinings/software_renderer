@@ -63,7 +63,7 @@ void update_scene_matrices() {
 void drawShaderModel(Rasterizer &rasterizer, Model &model) {
   long time_start, time_elapsed;
   Vector3f screen_coords[3];
-  PhongShader shader(model);
+  WireframeShader shader(model);
 
   time_start = SDL_GetTicks();
 
